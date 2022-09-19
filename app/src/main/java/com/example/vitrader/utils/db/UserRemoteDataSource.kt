@@ -26,6 +26,7 @@ object UserRemoteDataSource {
             db.collection(rootCollectionPath).document(userDocumentPath).get().await()
         }.await()
 
+        
         userData = doc.toObject(UserData::class.java) ?: throw Exception("User Database calling exception - can't load data")
         return userData
     }

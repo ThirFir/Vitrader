@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "571780007586",
+    "project_id": "vitrader-a8d28",
+    "storage_bucket": "vitrader-a8d28.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:571780007586:android:185cab82f95323344739fb",
+        "android_client_info": {
+          "package_name": "com.example.vitrader"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "571780007586-qf5qgillpd0b3smbbmrn00ibcc4918lr.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.vitrader",
+            "certificate_hash": "fd7568baa6ff3a4b88f2cd54ae87955dbf3dab31"
+          }
+        },
+        {
+          "client_id": "571780007586-fb0mvhnsh6k6mp4269qie959vkitk2o6.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCkzl3JYav7LsEI47ptQqC4c5-Nn_Nv2y8"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "571780007586-fb0mvhnsh6k6mp4269qie959vkitk2o6.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

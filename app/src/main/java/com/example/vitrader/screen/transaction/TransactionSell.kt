@@ -1,7 +1,6 @@
-package com.example.vitrader.screen.chart
+package com.example.vitrader.screen.transaction
 
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Modifier
 import com.example.vitrader.utils.viewmodel.CoinViewModel
 import com.example.vitrader.utils.viewmodel.UserViewModel
 

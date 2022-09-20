@@ -1,9 +1,7 @@
-package com.example.vitrader.screen.chart
+package com.example.vitrader.screen.transaction
 
 import android.widget.Toast
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
@@ -12,7 +10,6 @@ import androidx.compose.material.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.composed
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
@@ -22,22 +19,15 @@ import androidx.compose.ui.unit.sp
 import com.example.vitrader.theme.Blue1600
 import com.example.vitrader.theme.Blue2000
 import com.example.vitrader.utils.SymbolFormat
+import com.example.vitrader.utils.noRippleClickable
 import com.example.vitrader.utils.viewmodel.CoinViewModel
 import com.example.vitrader.utils.viewmodel.UserViewModel
 import java.lang.IllegalArgumentException
 import java.math.BigDecimal
-import java.util.*
 
 
 internal enum class TransactionState(val koreaName: String) {
     BUY("매수"), SELL("매도"), HISTORY("거래내역")
-}
-
-inline fun Modifier.noRippleClickable(crossinline onClick: () -> Unit): Modifier = composed {
-    clickable(indication = null,
-        interactionSource = remember { MutableInteractionSource() }) {
-        onClick()
-    }
 }
 
 @Composable

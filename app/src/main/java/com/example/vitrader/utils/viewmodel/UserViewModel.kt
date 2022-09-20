@@ -57,4 +57,14 @@ class UserViewModel : ViewModel() {
 
         onMessage(toastMessage)
     }
+
+    fun bookmark(symbol: String?) {
+        if (symbol != null) {
+            if(userData.value.bookmark.contains(symbol))
+                userRepository.removeBookmark(symbol)
+            else
+                userRepository.addBookmark(symbol)
+        }
+
+    }
 }

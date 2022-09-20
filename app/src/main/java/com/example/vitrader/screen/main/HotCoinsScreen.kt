@@ -98,8 +98,8 @@ fun HottestCoinView(hottestCoin : Coin, onClicked : (String) -> Unit) {
 @Composable
 fun HotCoinsListView(hotCoinList : List<Coin>, onClicked : (String) -> Unit) {
     Column() {
-        Text("Hot", Modifier.padding(start = 4.dp))
-        Spacer(Modifier.size(4.dp))
+//        Text("Hot", Modifier.padding(start = 4.dp))
+//        Spacer(Modifier.size(4.dp))
         LazyColumn(Modifier.width(320.dp), verticalArrangement = Arrangement.spacedBy(3.dp)) {
             items(hotCoinList) {
                 ItemCoinViewWithIcon(coin = it, onClicked)

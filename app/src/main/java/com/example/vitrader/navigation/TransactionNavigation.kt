@@ -5,6 +5,9 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.*
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Star
+import androidx.compose.material.icons.outlined.Star
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -15,10 +18,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.vitrader.R
 import com.example.vitrader.utils.viewmodel.UserViewModel
-import com.example.vitrader.screen.chart.ChartScreen
-import com.example.vitrader.screen.chart.TransactionScreen
-import com.example.vitrader.screen.chart.noRippleClickable
+import com.example.vitrader.screen.transaction.ChartScreen
+import com.example.vitrader.screen.transaction.TransactionScreen
 import com.example.vitrader.utils.NumberFormat
+import com.example.vitrader.utils.noRippleClickable
 import com.example.vitrader.utils.viewmodel.CoinViewModel
 import com.google.accompanist.pager.ExperimentalPagerApi
 import com.google.accompanist.pager.HorizontalPager
@@ -29,7 +32,7 @@ import kotlinx.coroutines.launch
 
 @Composable
 fun TransactionViewPager(coinViewModel: CoinViewModel, userViewModel: UserViewModel) {
-    Scaffold(topBar = { TransactionTopAppBar(coinViewModel) }) {
+    Scaffold(topBar = { TransactionTopAppBar(coinViewModel, userViewModel) }) {
 
         Column() {
             TransactionSecondaryTopAppBar(coinViewModel)
@@ -38,7 +41,7 @@ fun TransactionViewPager(coinViewModel: CoinViewModel, userViewModel: UserViewMo
     }
 }
 
-// ChartActivity Tab layout with viewpager
+// TransactionActivity Tab layout with viewpager
 @OptIn(ExperimentalPagerApi::class)
 @Composable
 fun TransactionNavigationTabLayout(coinViewModel: CoinViewModel, userViewModel: UserViewModel) {
@@ -82,9 +85,9 @@ fun TransactionNavigationTabLayout(coinViewModel: CoinViewModel, userViewModel: 
 }
 
 @Composable
-fun TransactionTopAppBar(coinViewModel: CoinViewModel) {
-
-    var bookmark by remember { mutableStateOf(false) }
+fun TransactionTopAppBar(coinViewModel: CoinViewModel, userViewModel: UserViewModel) {
+    val symbol = coinViewModel.coin?.info?.symbol
+    var bookmark by remember { mutableStateOf(userViewModel.bookmark.contains(symbol)) }
 
     TopAppBar(modifier = Modifier.background(color = Color(0xff1A1B2F))) {
         Column() {
@@ -92,24 +95,27 @@ fun TransactionTopAppBar(coinViewModel: CoinViewModel) {
             Row() {
 
                 // 코인 이름 + 심볼
-                Text(text = (coinViewModel.coin?.info?.name ?: "Unknown") + " " + coinViewModel.coin?.info?.symbol,
+                Text(text = (coinViewModel.coin?.info?.name ?: "Unknown") + " " + symbol,
                     modifier = Modifier
                         .padding(horizontal = 18.dp)
                         .weight(1f),
                     fontSize = 20.sp)
 
-                val painterResource =
-                    if (bookmark) painterResource(R.drawable.ic_star_filled)
-                    else painterResource(R.drawable.ic_star_empty)
-                Image(
-                    painter = painterResource,
+
+                val tint = if(bookmark) Color.Yellow
+                else Color.LightGray
+
+                Icon(
+                    imageVector = Icons.Default.Star,
                     contentDescription = "ic_like",
-                    contentScale = ContentScale.Crop,
                     modifier = Modifier
                         .padding(horizontal = 18.dp)
                         .size(28.dp)
-                        .clip(CircleShape)
-                        .noRippleClickable { bookmark = !bookmark }
+                        .noRippleClickable {
+                            bookmark = !bookmark
+                            userViewModel.bookmark(symbol)
+                        },
+                    tint = tint
                 )
             }
         }

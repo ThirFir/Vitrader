@@ -1,5 +1,11 @@
 package com.example.vitrader.utils
 
+import android.annotation.SuppressLint
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.runtime.remember
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.composed
 import androidx.compose.ui.graphics.Color
 import com.example.vitrader.utils.model.Coin
 import com.example.vitrader.utils.viewmodel.UserViewModel
@@ -20,3 +26,11 @@ fun userCoinCount(userViewModel: UserViewModel, symbol: String) : Double {
 }
 
 fun dbDoubleFormat(value: Double) : Double = String.format("%.8f", value).toDouble()
+
+@SuppressLint("UnnecessaryComposedModifier")
+inline fun Modifier.noRippleClickable(crossinline onClick: () -> Unit): Modifier = composed {
+    clickable(indication = null,
+        interactionSource = remember { MutableInteractionSource() }) {
+        onClick()
+    }
+}

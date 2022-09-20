@@ -52,7 +52,7 @@ fun BottomNavHost(userViewModel: UserViewModel, coinListViewModel: CoinListViewM
             HotCoinsScreen(coinListViewModel) { onCoinClicked(it) }
         }
         composable(MainScreenDestination.COIN_LIST.route) {
-            CoinListScreen(coinListViewModel) { onCoinClicked(it)}
+            CoinListScreen(coinListViewModel, userViewModel) { onCoinClicked(it)}
         }
         composable(MainScreenDestination.RANKING.route) {
             RankingScreen()
@@ -80,7 +80,6 @@ fun BottomNavigationView(navController: NavHostController, mainScreenList: List<
             BottomNavigationItem(
                 selected = selectedItem[item],
                 onClick = {
-                    //Log.d("BottomNavigationItem", Coins.all.toString())
 
                     if(selectedItem[item]) return@BottomNavigationItem
                     navController.popBackStack()

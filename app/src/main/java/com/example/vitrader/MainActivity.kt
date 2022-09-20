@@ -19,10 +19,10 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.navigation.compose.rememberNavController
 import com.example.vitrader.navigation.BottomNavHost
 import com.example.vitrader.navigation.BottomNavigationView
-import com.example.vitrader.screen.chart.noRippleClickable
 import com.example.vitrader.screen.main.getMainScreens
 import com.example.vitrader.theme.VitraderTheme
 import com.example.vitrader.utils.model.CoinRepository
+import com.example.vitrader.utils.noRippleClickable
 import com.example.vitrader.utils.viewmodel.CoinListViewModel
 import com.example.vitrader.utils.viewmodel.UserViewModel
 import com.google.firebase.auth.FirebaseAuth

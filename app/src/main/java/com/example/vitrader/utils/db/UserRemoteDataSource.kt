@@ -1,6 +1,5 @@
 package com.example.vitrader.utils.db
 
-import android.util.Log
 import com.example.vitrader.utils.dbDoubleFormat
 import com.example.vitrader.utils.model.UserData
 import com.google.firebase.auth.FirebaseAuth
@@ -9,7 +8,6 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.tasks.await
-import java.math.BigDecimal
 import kotlin.math.roundToLong
 
 object UserRemoteDataSource {
@@ -26,7 +24,7 @@ object UserRemoteDataSource {
             db.collection(rootCollectionPath).document(userDocumentPath).get().await()
         }.await()
 
-        
+
         userData = doc.toObject(UserData::class.java) ?: throw Exception("User Database calling exception - can't load data")
         return userData
     }
@@ -47,7 +45,7 @@ object UserRemoteDataSource {
             val prevCount = userData.possessingCoins[symbol]?.get(prevAveragePrice) ?: 0.0      // 기존 보유 개수
 
             possessCount = prevCount + count
-            Log.d("dddddddd", BigDecimal(prevCount + count).setScale(8, BigDecimal.ROUND_HALF_UP).toPlainString())
+
             averagePrice = (prevAveragePrice.toDouble() * prevCount + price * count) / possessCount     // 새 평균가
 
             userData.possessingCoins[symbol]?.remove(prevAveragePrice)
@@ -91,6 +89,13 @@ object UserRemoteDataSource {
         return userData
     }
 
+    suspend fun updateBookmark(bookmarkList: List<String>) {
+        val db = FirebaseFirestore.getInstance()
+        db.collection(rootCollectionPath).document(userDocumentPath)
+            .update("bookmark", bookmarkList)
+
+    }
+
     fun update(userData: UserData) {
         val db = FirebaseFirestore.getInstance()
         db.collection(rootCollectionPath).document(userDocumentPath)
@@ -101,6 +106,7 @@ object UserRemoteDataSource {
             }
 
     }
+
 
     suspend fun getUpdatedData(userData: UserData) : UserData {
         return UserData()

@@ -1,4 +1,4 @@
-package com.example.vitrader.screen.chart
+package com.example.vitrader.screen.transaction
 
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material.Surface

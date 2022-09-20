@@ -1,8 +1,6 @@
 package com.example.vitrader.screen.main
 
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -16,6 +14,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -23,6 +22,7 @@ import com.example.vitrader.theme.Blue1200
 import com.example.vitrader.utils.*
 import com.example.vitrader.utils.model.Coin
 import com.example.vitrader.utils.viewmodel.CoinListViewModel
+import com.example.vitrader.utils.viewmodel.UserViewModel
 import java.util.*
 
 enum class SortState {
@@ -34,25 +34,36 @@ enum class SortState {
     ASCENDING_VOLUME,
     DESCENDING_VOLUME
 }
+enum class ListTab {
+    ALL,
+    BOOKMARK,
+    POSSESS
+}
 
 @Composable
-fun CoinListScreen(coinListViewModel: CoinListViewModel, onCoinClicked: (String) -> Unit) {
+fun CoinListScreen(coinListViewModel: CoinListViewModel, userViewModel: UserViewModel, onCoinClicked: (String) -> Unit) {
     Column(modifier = Modifier
         .padding(0.dp)
         .fillMaxSize(),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        CoinSearchBar(coinListViewModel)
+        var search by remember { mutableStateOf("") }
+        CoinSearchBar(coinListViewModel) { search = it }
+
+        var tabState by remember { mutableStateOf(ListTab.ALL) }
+        CoinListFilterBar { tabState = it }
 
         var sortState by remember { mutableStateOf(SortState.DEFAULT) }
 
-        CoinSortBar(coinListViewModel, sortState) { sortState = it }
-        AllCoinsListView(coinListViewModel, sortState, onCoinClicked)
+        CoinSortBar(sortState) { sortState = it }
+
+        AllCoinsListView(coinListViewModel, userViewModel, sortState, search, tabState, onCoinClicked)
+
     }
 }
 
 @Composable
-fun CoinSearchBar(coinListViewModel: CoinListViewModel) {
+fun CoinSearchBar(coinListViewModel: CoinListViewModel, onValueChanged: (String) -> Unit) {
     var searchInput by remember { mutableStateOf( "" )}
 
     Row(modifier = Modifier
@@ -63,6 +74,8 @@ fun CoinSearchBar(coinListViewModel: CoinListViewModel) {
            onValueChange =
            {
                searchInput = it
+               onValueChanged(searchInput)
+
                coinListViewModel.coins.filter {
                    it.value.info.name.contains(searchInput) or
                    it.value.info.symbol.substring(4, it.value.info.symbol.length)
@@ -71,7 +84,7 @@ fun CoinSearchBar(coinListViewModel: CoinListViewModel) {
 
            },
            singleLine = true, textStyle = MaterialTheme.typography.body1,
-           trailingIcon = { IconButton(onClick = { }) { Icon(imageVector = Icons.Default.Search, contentDescription = "ic_search") }},
+           leadingIcon =  { Icon(imageVector = Icons.Default.Search, contentDescription = "ic_search") },
            colors = TextFieldDefaults.textFieldColors(backgroundColor = MaterialTheme.colors.background),
            placeholder = { Text("코인명/심볼 검색") },
            modifier = Modifier
@@ -81,70 +94,89 @@ fun CoinSearchBar(coinListViewModel: CoinListViewModel) {
 }
 
 @Composable
-fun CoinSortBar(coinListViewModel: CoinListViewModel, sortState: SortState, sort: (SortState) -> Unit) {
+fun CoinListFilterBar(tab: (ListTab) -> Unit) {
+    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Start) {
+        TextButton(onClick = { tab(ListTab.ALL)} ) {
+            Text("전체", color = Color.White)
+        }
+        TextButton(onClick = { tab(ListTab.BOOKMARK)} ) {
+            Text("관심", color = Color.White)
+        }
+        TextButton(onClick = { tab(ListTab.POSSESS)} ) {
+            Text("보유", color = Color.White)
+        }
+    }
+}
+
+@Composable
+fun CoinSortBar(sortState: SortState, sort: (SortState) -> Unit) {
 
     Row() {
-        Text("한글명")
-        Spacer(Modifier.weight(1f))
-        Text("현재가",
-            Modifier.clickable {
-                when (sortState) {
-                    SortState.DESCENDING_PRICE -> {
-                        sort(SortState.ASCENDING_PRICE)
+        Row(Modifier.weight(8f), horizontalArrangement = Arrangement.Center) {
+            Text("한글명")
+        }
+        Row(Modifier.weight(6f), horizontalArrangement = Arrangement.Center) {
+            Text("현재가",
+                Modifier.clickable {
+                        when (sortState) {
+                            SortState.DESCENDING_PRICE -> {
+                                sort(SortState.ASCENDING_PRICE)
+                            }
+                            SortState.ASCENDING_PRICE -> {
+                                sort(SortState.DEFAULT)
+                            }
+                            else -> {
+                                sort(SortState.DESCENDING_PRICE)
+                            }
+                        }
                     }
-                    SortState.ASCENDING_PRICE -> {
-                        sort(SortState.DEFAULT)
-                    }
-                    else -> {
-                        sort(SortState.DESCENDING_PRICE)
-                    }
-                }
-            }
-        )
-        Spacer(Modifier.weight(1f))
-        Text("전일대비",
-            Modifier.clickable{
-                when (sortState) {
-                    SortState.DESCENDING_RATE -> {
-                        sort(SortState.ASCENDING_RATE)
-                    }
-                    SortState.ASCENDING_RATE -> {
-                        sort(SortState.DEFAULT)
-                    }
-                    else -> {
-                        sort(SortState.DESCENDING_RATE)
-                    }
-                }
-            })
-        Spacer(Modifier.weight(1f))
-        Text("거래대금",
-            Modifier.clickable{
-                when (sortState) {
-                    SortState.DESCENDING_VOLUME -> {
-                        sort(SortState.ASCENDING_VOLUME)
-                    }
-                    SortState.ASCENDING_VOLUME -> {
-                        sort(SortState.DEFAULT)
-                    }
-                    else -> {
-                        sort(SortState.DESCENDING_VOLUME)
-                    }
-                }
-            })
+            )
+        }
+        Row(Modifier.weight(6f), horizontalArrangement = Arrangement.Center) {
+            Text("전일대비",
+                Modifier.clickable {
+                        when (sortState) {
+                            SortState.DESCENDING_RATE -> {
+                                sort(SortState.ASCENDING_RATE)
+                            }
+                            SortState.ASCENDING_RATE -> {
+                                sort(SortState.DEFAULT)
+                            }
+                            else -> {
+                                sort(SortState.DESCENDING_RATE)
+                            }
+                        }
+                    })
+        }
+        Row(Modifier.weight(5f), horizontalArrangement = Arrangement.Center) {
+            Text("거래대금",
+                Modifier.clickable {
+                        when (sortState) {
+                            SortState.DESCENDING_VOLUME -> {
+                                sort(SortState.ASCENDING_VOLUME)
+                            }
+                            SortState.ASCENDING_VOLUME -> {
+                                sort(SortState.DEFAULT)
+                            }
+                            else -> {
+                                sort(SortState.DESCENDING_VOLUME)
+                            }
+                        }
+                    })
+        }
     }
 }
 
 
-
 @Composable
-fun AllCoinsListView(coinListViewModel: CoinListViewModel, sortState: SortState, onCoinClicked: (String) -> Unit) {
+fun AllCoinsListView(coinListViewModel: CoinListViewModel, userViewModel: UserViewModel, sortState: SortState, search: String, tab: ListTab, onCoinClicked: (String) -> Unit) {
     val scroll = rememberLazyListState()
 
     Surface(modifier = Modifier
         .fillMaxSize()
        ) {
         LazyColumn(state = scroll) {
-            items(sortedItems(coinListViewModel, sortState)) {
+            items(sortedItems(coinListViewModel, userViewModel, sortState, search, tab)) {
                 ItemCoinViewWithoutIcon(
                     coinListViewModel = coinListViewModel,
                     coin = it,
@@ -173,7 +205,8 @@ fun AllCoinsListView(coinListViewModel: CoinListViewModel, sortState: SortState,
     }
 }
 
-private fun sortedItems(coinListViewModel: CoinListViewModel, sortState: SortState) : List<Coin> {
+private fun sortedItems(coinListViewModel: CoinListViewModel, userViewModel: UserViewModel, sortState: SortState, search: String, tab: ListTab) : List<Coin> {
+
     return when (sortState) {
         SortState.DEFAULT -> coinListViewModel.coins.values.sortedByDescending { it.ticker.acc_trade_price_24h }
         SortState.DESCENDING_PRICE -> coinListViewModel.coins.values.sortedByDescending { it.ticker.trade_price }
@@ -182,7 +215,16 @@ private fun sortedItems(coinListViewModel: CoinListViewModel, sortState: SortSta
         SortState.ASCENDING_RATE -> coinListViewModel.coins.values.sortedBy { it.ticker.signed_change_rate }
         SortState.DESCENDING_VOLUME -> coinListViewModel.coins.values.sortedByDescending { it.ticker.acc_trade_price_24h }
         SortState.ASCENDING_VOLUME -> coinListViewModel.coins.values.sortedBy { it.ticker.acc_trade_price_24h }
-    }
+    }.filter { it.info.name.contains(search) or                             // 검색 filter
+            it.info.symbol.substring(4, it.info.symbol.length)
+                .contains(search.uppercase(Locale.getDefault())) }
+        .filter {                                                   // 탭 filter
+            when (tab) {
+                ListTab.ALL -> true
+                ListTab.BOOKMARK -> { userViewModel.bookmark.contains(it.info.symbol) }
+                ListTab.POSSESS -> { userViewModel.possessingCoins.contains(it.info.symbol)}
+            }
+        }
 }
 
 @Composable
@@ -192,11 +234,11 @@ fun ItemCoinViewWithoutIcon(coinListViewModel: CoinListViewModel, coin : Coin, m
     val color = NumberFormat.color(coin.ticker.change)
 
     val context = LocalContext.current
-    Row(modifier = modifier,
+    Row(modifier = modifier.padding(start = 4.dp),
         verticalAlignment = Alignment.CenterVertically) {
 
         Column(Modifier.weight(8f)){
-            Text(c.info.name, fontSize = 14.sp)
+            Text(c.info.name, fontSize = 14.sp, maxLines = 1)
             Text(SymbolFormat.get(c.info.symbol), fontSize = 14.sp)
         }
 
@@ -204,16 +246,16 @@ fun ItemCoinViewWithoutIcon(coinListViewModel: CoinListViewModel, coin : Coin, m
             val price = c.ticker.trade_price
             val textFormat = NumberFormat.coinPrice(price)
 
-            Text(textFormat, color = color, fontSize = 14.sp)
+            Text(textFormat, color = color, fontSize = 14.sp, maxLines = 1)
         }
 
         Box(Modifier.weight(5f), contentAlignment = Alignment.CenterEnd) {
             Text(NumberFormat.coinRate(c.ticker.signed_change_rate),
-                color = color, fontSize = 14.sp)
+                color = color, fontSize = 14.sp, maxLines = 1)
         }
 
         Box(Modifier.weight(6f), contentAlignment = Alignment.CenterEnd) {
-            Text(NumberFormat.coinVolume(c.ticker.acc_trade_price_24h), fontSize = 14.sp)
+            Text(NumberFormat.coinVolume(c.ticker.acc_trade_price_24h), fontSize = 14.sp, maxLines = 1)
         }
 
 

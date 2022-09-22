@@ -18,6 +18,8 @@ class UserViewModel : ViewModel() {
     val possessingCoins get() = userData.value.possessingCoins
     val bookmark get() = userData.value.bookmark
 
+
+
     fun getAverage(symbol: String) : BigDecimal {
         val keyIterator = possessingCoins[symbol]?.keys?.iterator()
         var averagePrice = 0.0
@@ -40,6 +42,7 @@ class UserViewModel : ViewModel() {
             }
         }
         else "보유 krw이 부족합니다"
+        // TODO(DB의 KRW 값과 비교)
 
         onMessage(toastMessage)
     }

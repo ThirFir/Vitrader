@@ -18,7 +18,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.vitrader.theme.Blue1600
 import com.example.vitrader.theme.Blue2000
+import com.example.vitrader.utils.NumberFormat
 import com.example.vitrader.utils.SymbolFormat
+import com.example.vitrader.utils.model.UserRepository
 import com.example.vitrader.utils.noRippleClickable
 import com.example.vitrader.utils.viewmodel.CoinViewModel
 import com.example.vitrader.utils.viewmodel.UserViewModel
@@ -57,7 +59,7 @@ fun TransactionScreen(coinViewModel: CoinViewModel, userViewModel: UserViewModel
 
 @Composable
 internal fun TransactingChangeTab(selected: TransactionState, onChanged: (TransactionState) -> Unit) {
-    val selectedTabColor = Blue2000
+    val selectedTabColor = MaterialTheme.colors.surface
     val unSelectedTabColor = Blue1600
 
     Row() {
@@ -119,7 +121,8 @@ internal fun TransactingScreen(coinViewModel: CoinViewModel, userViewModel: User
                                 coinViewModel.coin?.info?.symbol!!)
 
                             else userViewModel.getCoinCount(symbol).toPlainString() + " " + SymbolFormat.get(
-                                coinViewModel.coin?.info?.symbol!!)
+                                coinViewModel.coin?.info?.symbol!!) + "\n" + "≈" + NumberFormat.krwFormat(
+                                coinViewModel.coin!!.ticker.trade_price * userViewModel.getCoinCount(symbol).toDouble())
 
                         }
                     Text(textValue, fontSize = 13.sp, fontWeight = FontWeight.Bold)
@@ -203,32 +206,41 @@ internal fun ByMarketPriceView(coinViewModel: CoinViewModel, userViewModel: User
                 }
             }
         }
-
-        Button(onClick = {      // Reset Button
-            input = "0"
-        }){
-            Text("초기화")
+        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
+            Text("수수료 : " + NumberFormat.coinRate(UserRepository.FEE), fontSize = 8.sp)
         }
+        Row(modifier = Modifier.fillMaxSize(),horizontalArrangement = Arrangement.SpaceAround) {
+            Button(modifier = Modifier.size(width = 80.dp, height = 40.dp),
+                onClick = {      // Reset Button
+                input = "0"
+            }) {
+                Text("초기화")
+            }
 
-        /**
-         *  Buy or Sell
-         */
-        Button(onClick = {
-            if(tab == TransactionState.BUY) {    // BUY
-                userViewModel.buy(symbol = symbol,
-                    price = coinViewModel.coin?.ticker?.trade_price!!,
-                    count = if (input == "") 0.0 else BigDecimal(BigDecimal(input).setScale(8, BigDecimal.ROUND_HALF_UP).toDouble() / coinViewModel.coin?.ticker?.trade_price!!).toDouble()) {
-                    Toast.makeText(context, it, Toast.LENGTH_SHORT).show()
+            /**
+             *  Buy or Sell
+             */
+            Button(modifier = Modifier.size(width = 80.dp, height = 40.dp),
+                onClick = {
+                if (tab == TransactionState.BUY) {    // BUY
+                    userViewModel.buy(symbol = symbol,
+                        price = coinViewModel.coin?.ticker?.trade_price!!,
+                        count = if (input == "") 0.0 else BigDecimal(BigDecimal(input).setScale(8,
+                            BigDecimal.ROUND_HALF_UP)
+                            .toDouble() / coinViewModel.coin?.ticker?.trade_price!!).toDouble()) {
+                        Toast.makeText(context, it, Toast.LENGTH_SHORT).show()
+                    }
+                } else {          // SELL
+                    userViewModel.sell(symbol = symbol,
+                        price = coinViewModel.coin?.ticker?.trade_price!!,
+                        count = if (input == "") 0.0 else BigDecimal(input).setScale(8,
+                            BigDecimal.ROUND_HALF_UP).toDouble()) {
+                        Toast.makeText(context, it, Toast.LENGTH_SHORT).show()
+                    }
                 }
+            }) {
+                Text(if (tab == TransactionState.BUY) "매수" else "매도")
             }
-            else {          // SELL
-                userViewModel.sell(symbol = symbol, price = coinViewModel.coin?.ticker?.trade_price!!,
-                count = if(input == "") 0.0 else BigDecimal(input).setScale(8, BigDecimal.ROUND_HALF_UP).toDouble()) {
-                    Toast.makeText(context, it, Toast.LENGTH_SHORT).show()
-                }
-            }
-        }) {
-            Text(if (tab == TransactionState.BUY) "매수" else "매도")
         }
     }
 }

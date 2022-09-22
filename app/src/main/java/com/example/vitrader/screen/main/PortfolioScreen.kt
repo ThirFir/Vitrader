@@ -19,11 +19,9 @@ import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.vitrader.navigation.moveToTransactionActivity
-import com.example.vitrader.theme.Blue1200
 import com.example.vitrader.theme.Blue1800
 import com.example.vitrader.theme.Blue200
 import com.example.vitrader.utils.NumberFormat
@@ -44,17 +42,17 @@ fun TotalPossessView(userViewModel: UserViewModel, coinListViewModel: CoinListVi
 
     val context = LocalContext.current
 
-    var totalPossess = 0.0
+    var totalEvaluation = 0L      // 총 평가
     val userSymbolIterator = userViewModel.possessingCoins.keys.iterator()
     val symbolList = mutableListOf<String>()
     for(symbol in userSymbolIterator) {
-        totalPossess += (userViewModel.getCoinCount(symbol)
-            .toDouble() * (coinListViewModel.coins[symbol]?.ticker?.trade_price ?: 0.0))
+        totalEvaluation += (userViewModel.getCoinCount(symbol)
+            .toDouble() * (coinListViewModel.coins[symbol]?.ticker?.trade_price ?: 0.0)).roundToLong()
         symbolList.add(symbol)
     }
 
     var change by remember { mutableStateOf("EVEN") }
-    change = if(totalPossess.roundToLong() - userViewModel.totalBuy > 0) "RISE" else if(totalPossess.roundToLong() - userViewModel.totalBuy < 0) "FALL" else "EVEN"
+    change = if(totalEvaluation - userViewModel.totalBuy > 0) "RISE" else if(totalEvaluation - userViewModel.totalBuy < 0) "FALL" else "EVEN"
 
 
     Box(Modifier.padding(16.dp)) {
@@ -63,29 +61,42 @@ fun TotalPossessView(userViewModel: UserViewModel, coinListViewModel: CoinListVi
             Box(modifier = Modifier
                 .fillMaxWidth()
                 .clip(RoundedCornerShape(18.dp))
-                .weight(1f)) {
+                .weight(2f)) {
                 Column(Modifier
                     .fillMaxWidth()
                     .padding(24.dp)) {
-                    Text("총 보유자산", modifier = Modifier.weight(2f))
+                    Text("총 보유자산", modifier = Modifier.weight(1f))
                     Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier
                         .fillMaxSize()
                         .weight(3f)) {
-                        Text("₩ " + NumberFormat.krwFormat(totalPossess + userViewModel.krw),
+                        Text("₩ " + NumberFormat.krwFormat(totalEvaluation + userViewModel.krw),
                             fontSize = 36.sp,
                             fontWeight = FontWeight.Bold,
-                            modifier = Modifier.weight(2f),
                             color = Color.White, )
-                        Row(modifier = Modifier.weight(1f)) {
+                        Row() {
                             if (change == "RISE") Text("+", color = Color.Green)
                             if (userViewModel.totalBuy == 0L)
                                 Text("0.00%", color = Color.White)
                             else
-                                Text(NumberFormat.coinRate((totalPossess.roundToLong() - userViewModel.totalBuy).toDouble() / userViewModel.totalBuy.toDouble()),
+                                Text(NumberFormat.coinRate((totalEvaluation - userViewModel.totalBuy).toDouble() / userViewModel.totalBuy.toDouble()),
                                     color = NumberFormat.color(change))
                             Spacer(Modifier.width(12.dp))
-                            Text("(${NumberFormat.krwFormat(totalPossess - userViewModel.totalBuy)})",
+                            Text("(${NumberFormat.krwFormat(totalEvaluation - userViewModel.totalBuy)})",
                                 color = NumberFormat.color(change))
+                        }
+                    }
+                    Column(modifier = Modifier.fillMaxWidth(), horizontalAlignment = Alignment.End) {
+                        Row() {
+                            Text(userViewModel.krwStringFormat)
+                            Text("보유 KRW")
+                        }
+                        Row() {
+                            Text(NumberFormat.krwFormat(totalEvaluation))
+                            Text("총 평가")
+                        }
+                        Row() {
+                            Text(userViewModel.totalBuyStringFormat)
+                            Text("총 매수")
                         }
                     }
                 }
@@ -108,12 +119,11 @@ fun TotalPossessView(userViewModel: UserViewModel, coinListViewModel: CoinListVi
                             Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(horizontal = 8.dp)) {
                                 Text(coinListViewModel.coins[symbol]?.info?.name ?: "-", modifier = Modifier.weight(1f), fontWeight = FontWeight.Bold)        // 코인명
 
-                                //보유수량 * 현재가 - 매수총금액액
                                Column(horizontalAlignment = Alignment.End){
 
                                    val itemChange = if(coinEval - userEval > 0.0) "RISE" else if(coinEval - userEval < 0.0) "FALL" else "EVEN"
 
-                                   Text(NumberFormat.krwFormat(coinEval - userEval), color = NumberFormat.color(itemChange))
+                                   Text(NumberFormat.krwFormat(coinEval.roundToLong() - userEval.roundToLong()), color = NumberFormat.color(itemChange))
                                    Text(NumberFormat.coinRate((coinEval - userEval) / userEval), color = NumberFormat.color(itemChange))
                                 }
                             }
@@ -165,6 +175,11 @@ fun TotalPossessView(userViewModel: UserViewModel, coinListViewModel: CoinListVi
             }
         }
     }
+}
+
+@Composable
+fun PossessList() {
+
 }
 
 @OptIn(ExperimentalMaterialApi::class)

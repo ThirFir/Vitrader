@@ -8,6 +8,8 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.KeyboardArrowDown
+import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -53,11 +55,11 @@ fun CoinListScreen(coinListViewModel: CoinListViewModel, userViewModel: UserView
         var tabState by remember { mutableStateOf(ListTab.ALL) }
         CoinListFilterBar { tabState = it }
 
-        var sortState by remember { mutableStateOf(SortState.DEFAULT) }
+        val sortState = remember { mutableStateOf(SortState.DEFAULT) }
 
-        CoinSortBar(sortState) { sortState = it }
+        CoinSortBar(sortState) { sortState.value = it }
 
-        AllCoinsListView(coinListViewModel, userViewModel, sortState, search, tabState, onCoinClicked)
+        AllCoinsListView(coinListViewModel, userViewModel, sortState.value, search, tabState, onCoinClicked)
 
     }
 }
@@ -109,60 +111,75 @@ fun CoinListFilterBar(tab: (ListTab) -> Unit) {
 }
 
 @Composable
-fun CoinSortBar(sortState: SortState, sort: (SortState) -> Unit) {
+fun CoinSortBar(sortState: MutableState<SortState>, sort: (SortState) -> Unit) {
 
     Row() {
         Row(Modifier.weight(8f), horizontalArrangement = Arrangement.Center) {
             Text("한글명")
         }
-        Row(Modifier.weight(6f), horizontalArrangement = Arrangement.Center) {
-            Text("현재가",
-                Modifier.clickable {
-                        when (sortState) {
-                            SortState.DESCENDING_PRICE -> {
-                                sort(SortState.ASCENDING_PRICE)
-                            }
-                            SortState.ASCENDING_PRICE -> {
-                                sort(SortState.DEFAULT)
-                            }
-                            else -> {
-                                sort(SortState.DESCENDING_PRICE)
-                            }
-                        }
+        Row(Modifier
+            .weight(6f)
+            .noRippleClickable {
+                when (sortState.value) {
+                    SortState.DESCENDING_PRICE -> {
+                        sort(SortState.ASCENDING_PRICE)
                     }
-            )
+                    SortState.ASCENDING_PRICE -> {
+                        sort(SortState.DEFAULT)
+                    }
+                    else -> {
+                        sort(SortState.DESCENDING_PRICE)
+                    }
+                }
+            }, horizontalArrangement = Arrangement.Center) {
+            Text("현재가")
+            if (sortState.value == SortState.ASCENDING_PRICE)
+                Icon(imageVector = Icons.Default.KeyboardArrowUp, contentDescription = null)
+            else if (sortState.value == SortState.DESCENDING_PRICE)
+                Icon(imageVector = Icons.Default.KeyboardArrowDown, contentDescription = null)
+
         }
-        Row(Modifier.weight(6f), horizontalArrangement = Arrangement.Center) {
-            Text("전일대비",
-                Modifier.clickable {
-                        when (sortState) {
-                            SortState.DESCENDING_RATE -> {
-                                sort(SortState.ASCENDING_RATE)
-                            }
-                            SortState.ASCENDING_RATE -> {
-                                sort(SortState.DEFAULT)
-                            }
-                            else -> {
-                                sort(SortState.DESCENDING_RATE)
-                            }
-                        }
-                    })
+        Row(Modifier
+            .weight(6f)
+            .noRippleClickable {
+                when (sortState.value) {
+                    SortState.DESCENDING_RATE -> {
+                        sort(SortState.ASCENDING_RATE)
+                    }
+                    SortState.ASCENDING_RATE -> {
+                        sort(SortState.DEFAULT)
+                    }
+                    else -> {
+                        sort(SortState.DESCENDING_RATE)
+                    }
+                }
+            }, horizontalArrangement = Arrangement.Center) {
+            Text("전일대비")
+            if (sortState.value == SortState.ASCENDING_RATE)
+                Icon(imageVector = Icons.Default.KeyboardArrowUp, contentDescription = null)
+            else if (sortState.value == SortState.DESCENDING_RATE)
+                Icon(imageVector = Icons.Default.KeyboardArrowDown, contentDescription = null)
         }
-        Row(Modifier.weight(5f), horizontalArrangement = Arrangement.Center) {
-            Text("거래대금",
-                Modifier.clickable {
-                        when (sortState) {
-                            SortState.DESCENDING_VOLUME -> {
-                                sort(SortState.ASCENDING_VOLUME)
-                            }
-                            SortState.ASCENDING_VOLUME -> {
-                                sort(SortState.DEFAULT)
-                            }
-                            else -> {
-                                sort(SortState.DESCENDING_VOLUME)
-                            }
-                        }
-                    })
+        Row(Modifier
+            .weight(5f)
+            .noRippleClickable {
+                when (sortState.value) {
+                    SortState.DESCENDING_VOLUME -> {
+                        sort(SortState.ASCENDING_VOLUME)
+                    }
+                    SortState.ASCENDING_VOLUME -> {
+                        sort(SortState.DEFAULT)
+                    }
+                    else -> {
+                        sort(SortState.DESCENDING_VOLUME)
+                    }
+                }
+            }, horizontalArrangement = Arrangement.Center) {
+            Text("거래대금")
+            if (sortState.value == SortState.ASCENDING_VOLUME)
+                Icon(imageVector = Icons.Default.KeyboardArrowUp, contentDescription = null)
+            else if (sortState.value == SortState.DESCENDING_VOLUME || sortState.value == SortState.DEFAULT)
+                Icon(imageVector = Icons.Default.KeyboardArrowDown, contentDescription = null)
         }
     }
 }

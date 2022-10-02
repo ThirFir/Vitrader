@@ -8,14 +8,14 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlin.math.roundToLong
 
-object UserRepository {
+object UserAccountRepository {
 
     private const val TAG = "UserRepository"
     const val FEE = 0.0005
 
     private val userRemoteDataSource = UserRemoteDataSource
-    private var _userData = mutableStateOf(UserData())
-    val userData get() = _userData
+    private var _userAccountData = mutableStateOf(UserAccountData())
+    val userAccountData get() = _userAccountData
 
     init {
         setInitialUserData()
@@ -23,18 +23,18 @@ object UserRepository {
 
     private fun setInitialUserData() {
         CoroutineScope(Dispatchers.Default).launch {
-            _userData.value = userRemoteDataSource.getUserDataFromDB()
+            _userAccountData.value = userRemoteDataSource.getUserAccountData()
         }
     }
 
-    private fun setUserData(newUserData: UserData) {
-        _userData.value = newUserData
+    private fun setUserData(newUserAccountData: UserAccountData) {
+        _userAccountData.value = newUserAccountData
     }
 
     fun buy(symbol: String, price: Double, count: Double) {
 
         val chargedCount = count * (1 - FEE)
-        val newUserData = userData.value.copy()
+        val newUserData = userAccountData.value.copy()
 
         // About "possessingCoins"
         if(newUserData.possessingCoins[symbol] == null)
@@ -69,7 +69,7 @@ object UserRepository {
 
     fun sell(symbol: String, price: Double, count: Double) {
 
-        val newUserData = userData.value.copy()
+        val newUserData = userAccountData.value.copy()
 
 
         val keyIterator = newUserData.possessingCoins[symbol]?.keys?.iterator()
@@ -89,17 +89,17 @@ object UserRepository {
         update(newUserData)
     }
 
-    private fun update(newUserData: UserData = this._userData.value) {
-        setUserData(newUserData)
-        userRemoteDataSource.update(newUserData)
+    private fun update(newUserAccountData: UserAccountData = this._userAccountData.value) {
+        setUserData(newUserAccountData)
+        userRemoteDataSource.updateAccount(newUserAccountData)
     }
 
     fun addBookmark(symbol: String) {
-        _userData.value.bookmark.add(symbol)
-        userRemoteDataSource.updateBookmark(_userData.value.bookmark)
+        _userAccountData.value.bookmark.add(symbol)
+        userRemoteDataSource.updateBookmark(_userAccountData.value.bookmark)
     }
     fun removeBookmark(symbol: String) {
-        _userData.value.bookmark.remove(symbol)
-        userRemoteDataSource.updateBookmark(_userData.value.bookmark)
+        _userAccountData.value.bookmark.remove(symbol)
+        userRemoteDataSource.updateBookmark(_userAccountData.value.bookmark)
     }
 }

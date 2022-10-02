@@ -23,7 +23,7 @@ import com.example.vitrader.screen.main.*
 import com.example.vitrader.theme.Blue1600
 import com.example.vitrader.theme.Blue2000
 import com.example.vitrader.utils.viewmodel.CoinListViewModel
-import com.example.vitrader.utils.viewmodel.UserViewModel
+import com.example.vitrader.utils.viewmodel.UserAccountViewModel
 
 fun moveToTransactionActivity(context: Context, symbol: String) {
     val intent = Intent(context, TransactionActivity::class.java)
@@ -36,7 +36,7 @@ fun moveToTransactionActivity(context: Context, symbol: String) {
 }
 
 @Composable
-fun BottomNavHost(userViewModel: UserViewModel, coinListViewModel: CoinListViewModel, navController: NavHostController) {
+fun BottomNavHost(userAccountViewModel: UserAccountViewModel, coinListViewModel: CoinListViewModel, navController: NavHostController) {
 
     val context = LocalContext.current
 
@@ -52,13 +52,13 @@ fun BottomNavHost(userViewModel: UserViewModel, coinListViewModel: CoinListViewM
             HotCoinsScreen(coinListViewModel) { onCoinClicked(it) }
         }
         composable(MainScreenDestination.COIN_LIST.route) {
-            CoinListScreen(coinListViewModel, userViewModel) { onCoinClicked(it)}
+            CoinListScreen(coinListViewModel, userAccountViewModel) { onCoinClicked(it)}
         }
         composable(MainScreenDestination.RANKING.route) {
             RankingScreen()
         }
         composable(MainScreenDestination.PROFILE.route) {
-            ProfileScreen(userViewModel, coinListViewModel)
+            ProfileScreen(userAccountViewModel, coinListViewModel)
         }
 
     }
@@ -79,8 +79,7 @@ fun BottomNavigationView(navController: NavHostController, mainScreenList: List<
         for(item in mainScreenList.indices){
             BottomNavigationItem(
                 selected = selectedItem[item],
-                onClick = {
-
+                onClick =  {
                     if(selectedItem[item]) return@BottomNavigationItem
                     navController.popBackStack()
                     currentMainScreen = mainScreenList[item]

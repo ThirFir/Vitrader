@@ -6,10 +6,7 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.composed
-import androidx.compose.ui.graphics.Color
-import com.example.vitrader.utils.model.Coin
-import com.example.vitrader.utils.viewmodel.UserViewModel
-import java.text.DecimalFormat
+import com.example.vitrader.utils.viewmodel.UserAccountViewModel
 
 object UpbitAPI {
     const val BASE_URL = "https://api.upbit.com/v1/"
@@ -21,8 +18,8 @@ object UpbitAPI {
     const val WEB_SOCKET = "wss://api.upbit.com/websocket/v1"
 }
 
-fun userCoinCount(userViewModel: UserViewModel, symbol: String) : Double {
-    return userViewModel.possessingCoins[symbol]?.values?.sum() ?: 0.0
+fun userCoinCount(userAccountViewModel: UserAccountViewModel, symbol: String) : Double {
+    return userAccountViewModel.possessingCoins[symbol]?.values?.sum() ?: 0.0
 }
 
 fun dbDoubleFormat(value: Double) : Double = String.format("%.8f", value).toDouble()

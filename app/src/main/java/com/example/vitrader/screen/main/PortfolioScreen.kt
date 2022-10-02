@@ -19,6 +19,7 @@ import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.vitrader.navigation.moveToTransactionActivity
@@ -27,33 +28,32 @@ import com.example.vitrader.theme.Blue200
 import com.example.vitrader.utils.NumberFormat
 import com.example.vitrader.utils.noRippleClickable
 import com.example.vitrader.utils.viewmodel.CoinListViewModel
-import com.example.vitrader.utils.viewmodel.UserViewModel
+import com.example.vitrader.utils.viewmodel.UserAccountViewModel
 import kotlin.math.roundToLong
 
 @Composable
-fun ProfileScreen(userViewModel: UserViewModel, coinListViewModel: CoinListViewModel) {
+fun ProfileScreen(userAccountViewModel: UserAccountViewModel, coinListViewModel: CoinListViewModel) {
     Column() {
-        TotalPossessView(userViewModel, coinListViewModel)
+        TotalPossessView(userAccountViewModel, coinListViewModel)
     }
 }
 
 @Composable
-fun TotalPossessView(userViewModel: UserViewModel, coinListViewModel: CoinListViewModel) {
+fun TotalPossessView(userAccountViewModel: UserAccountViewModel, coinListViewModel: CoinListViewModel) {
 
     val context = LocalContext.current
 
     var totalEvaluation = 0L      // 총 평가
-    val userSymbolIterator = userViewModel.possessingCoins.keys.iterator()
+    val userSymbolIterator = userAccountViewModel.possessingCoins.keys.iterator()
     val symbolList = mutableListOf<String>()
     for(symbol in userSymbolIterator) {
-        totalEvaluation += (userViewModel.getCoinCount(symbol)
+        totalEvaluation += (userAccountViewModel.getCoinCount(symbol)
             .toDouble() * (coinListViewModel.coins[symbol]?.ticker?.trade_price ?: 0.0)).roundToLong()
         symbolList.add(symbol)
     }
 
-    var change by remember { mutableStateOf("EVEN") }
-    change = if(totalEvaluation - userViewModel.totalBuy > 0) "RISE" else if(totalEvaluation - userViewModel.totalBuy < 0) "FALL" else "EVEN"
-
+    var userEvalChange by remember { mutableStateOf("EVEN") }
+    userEvalChange = if(totalEvaluation - userAccountViewModel.totalBuy > 0) "RISE" else if(totalEvaluation - userAccountViewModel.totalBuy < 0) "FALL" else "EVEN"
 
     Box(Modifier.padding(16.dp)) {
         Column() {
@@ -69,34 +69,34 @@ fun TotalPossessView(userViewModel: UserViewModel, coinListViewModel: CoinListVi
                     Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier
                         .fillMaxSize()
                         .weight(3f)) {
-                        Text("₩ " + NumberFormat.krwFormat(totalEvaluation + userViewModel.krw),
+                        Text("₩ " + NumberFormat.krwFormat(totalEvaluation + userAccountViewModel.krw),
                             fontSize = 36.sp,
                             fontWeight = FontWeight.Bold,
                             color = Color.White, )
                         Row() {
-                            if (change == "RISE") Text("+", color = Color.Green)
-                            if (userViewModel.totalBuy == 0L)
+                            if (userEvalChange == "RISE") Text("+", color = Color.Green)
+                            if (userAccountViewModel.totalBuy == 0L)
                                 Text("0.00%", color = Color.White)
                             else
-                                Text(NumberFormat.coinRate((totalEvaluation - userViewModel.totalBuy).toDouble() / userViewModel.totalBuy.toDouble()),
-                                    color = NumberFormat.color(change))
+                                Text(NumberFormat.coinRate((totalEvaluation - userAccountViewModel.totalBuy).toDouble() / userAccountViewModel.totalBuy.toDouble()),
+                                    color = NumberFormat.color(userEvalChange))
                             Spacer(Modifier.width(12.dp))
-                            Text("(${NumberFormat.krwFormat(totalEvaluation - userViewModel.totalBuy)})",
-                                color = NumberFormat.color(change))
+                            Text("(${NumberFormat.krwFormat(totalEvaluation - userAccountViewModel.totalBuy)})",
+                                color = NumberFormat.color(userEvalChange))
                         }
                     }
                     Column(modifier = Modifier.fillMaxWidth(), horizontalAlignment = Alignment.End) {
-                        Row() {
-                            Text(userViewModel.krwStringFormat)
-                            Text("보유 KRW")
+                        Row(verticalAlignment = Alignment.Bottom, modifier = Modifier.fillMaxWidth()) {
+                            Text("보유 KRW", fontSize = 12.sp, modifier = Modifier.weight(1f), textAlign = TextAlign.End)
+                            Text(userAccountViewModel.krwStringFormat, color = Color.White, modifier = Modifier.width(150.dp), textAlign = TextAlign.End)
                         }
-                        Row() {
-                            Text(NumberFormat.krwFormat(totalEvaluation))
-                            Text("총 평가")
+                        Row(verticalAlignment = Alignment.Bottom, modifier = Modifier.fillMaxWidth()) {
+                            Text("총 평가", fontSize = 12.sp, modifier = Modifier.weight(1f), textAlign = TextAlign.End)
+                            Text(NumberFormat.krwFormat(totalEvaluation), color = Color.White, modifier = Modifier.width(150.dp), textAlign = TextAlign.End)
                         }
-                        Row() {
-                            Text(userViewModel.totalBuyStringFormat)
-                            Text("총 매수")
+                        Row(verticalAlignment = Alignment.Bottom, modifier = Modifier.fillMaxWidth()) {
+                            Text("총 매수", fontSize = 12.sp, modifier = Modifier.weight(1f), textAlign = TextAlign.End)
+                            Text(userAccountViewModel.totalBuyStringFormat, color = Color.White, modifier = Modifier.width(150.dp), textAlign = TextAlign.End)
                         }
                     }
                 }
@@ -112,8 +112,9 @@ fun TotalPossessView(userViewModel: UserViewModel, coinListViewModel: CoinListVi
 
                 LazyColumn {
                     itemsIndexed(symbolList){ index, symbol ->
-                        val coinEval = (coinListViewModel.coins[symbol]?.ticker?.trade_price ?: 0.0) * userViewModel.getCoinCount(symbol).toDouble()
-                        val userEval = userViewModel.getAverage(symbol).toDouble() * userViewModel.getCoinCount(symbol).toDouble()
+                        val coinEval = (coinListViewModel.coins[symbol]?.ticker?.trade_price ?: 0.0) * userAccountViewModel.getCoinCount(symbol).toDouble()
+                        val userEval = userAccountViewModel.getAverage(symbol).toDouble() * userAccountViewModel.getCoinCount(symbol).toDouble()
+
 
                         ExpandableCard(contentColor = Color.White, modifier = Modifier.fillMaxWidth(), backgroundColor = Blue1800, headerContent = {
                             Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(horizontal = 8.dp)) {
@@ -128,16 +129,22 @@ fun TotalPossessView(userViewModel: UserViewModel, coinListViewModel: CoinListVi
                                 }
                             }
                         }) {    // Detail Content
-                            Column(horizontalAlignment = Alignment.End, modifier = Modifier.fillMaxWidth().padding(8.dp)) {
+                            Column(horizontalAlignment = Alignment.End, modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(8.dp)) {
+
+                                var coinChange by remember { mutableStateOf("EVEN") }
+                                coinChange = if(coinListViewModel.coins[symbol]!!.ticker.change == "RISE") "RISE" else "FALL"
+
                                 Row() {
                                     Column(Modifier.weight(1f),
                                         horizontalAlignment = Alignment.End) {
                                         Text("현재가", fontSize = 12.sp, color = Blue200)
-                                        Text(NumberFormat.coinPrice(coinListViewModel.coins[symbol]?.ticker?.trade_price ?: 0.0), color = NumberFormat.color(change), maxLines = 1, fontSize = 14.sp)
+                                        Text(NumberFormat.coinPrice(coinListViewModel.coins[symbol]?.ticker?.trade_price ?: 0.0), color = NumberFormat.color(coinChange), maxLines = 1, fontSize = 14.sp)
                                         Spacer(Modifier.height(10.dp))
 
                                         Text("보유 수량", fontSize = 12.sp, color = Blue200)
-                                        Text(userViewModel.getCoinCount(symbol).toPlainString(), maxLines = 1, fontSize = 14.sp)
+                                        Text(userAccountViewModel.getCoinCount(symbol).toPlainString(), maxLines = 1, fontSize = 14.sp)
                                         Spacer(Modifier.height(10.dp))
 
                                         Text("평가 금액", fontSize = 12.sp, color = Blue200)
@@ -146,11 +153,11 @@ fun TotalPossessView(userViewModel: UserViewModel, coinListViewModel: CoinListVi
                                     Column(Modifier.weight(1f),
                                         horizontalAlignment = Alignment.End) {
                                         Text("전일 대비", fontSize = 12.sp, color = Blue200)
-                                        Text(NumberFormat.coinRate(coinListViewModel.coins[symbol]?.ticker?.signed_change_rate ?: 0.0), color = NumberFormat.color(change), fontSize = 14.sp)
+                                        Text(NumberFormat.coinRate(coinListViewModel.coins[symbol]?.ticker?.signed_change_rate ?: 0.0), color = NumberFormat.color(coinChange), fontSize = 14.sp)
                                         Spacer(Modifier.height(10.dp))
 
                                         Text("매수평균가", fontSize = 12.sp, color = Blue200)
-                                        Text(NumberFormat.coinPrice(userViewModel.getAverage(symbol)
+                                        Text(NumberFormat.coinPrice(userAccountViewModel.getAverage(symbol)
                                             .toDouble()), maxLines = 1, fontSize = 14.sp)
                                         Spacer(Modifier.height(10.dp))
 
@@ -230,7 +237,8 @@ fun ExpandableCard(
                     imageVector = Icons.Default.KeyboardArrowDown,
                     tint = contentColor, // Icon Color
                     contentDescription = "Drop Down Arrow",
-                    modifier = Modifier.rotate(rotationState)
+                    modifier = Modifier
+                        .rotate(rotationState)
                         .weight(.1f)
                 )
             }

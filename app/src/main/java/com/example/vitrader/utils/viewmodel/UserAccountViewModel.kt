@@ -1,22 +1,21 @@
 package com.example.vitrader.utils.viewmodel
 
 import androidx.lifecycle.ViewModel
-import com.example.vitrader.utils.model.UserRepository
-import com.example.vitrader.utils.userCoinCount
+import com.example.vitrader.utils.model.UserAccountRepository
 import java.math.BigDecimal
 import java.text.DecimalFormat
 
-class UserViewModel : ViewModel() {
-    private val userRepository = UserRepository
-    private val userData get() = userRepository.userData
+class UserAccountViewModel : ViewModel() {
+    private val userAccountRepository = UserAccountRepository
+    private val userAccountData get() = userAccountRepository.userAccountData
 
-    val krw get() = userData.value.krw
-    val krwStringFormat: String get() = DecimalFormat("#,###").format(BigDecimal(userData.value.krw).setScale(0, BigDecimal.ROUND_HALF_UP).toLong())
-    val totalBuy get() = userData.value.totalBuy
-    val totalBuyStringFormat: String get() = DecimalFormat("#,###").format(BigDecimal(userData.value.totalBuy).setScale(0, BigDecimal.ROUND_HALF_UP).toLong())
+    val krw get() = userAccountData.value.krw
+    val krwStringFormat: String get() = DecimalFormat("#,###").format(BigDecimal(userAccountData.value.krw).setScale(0, BigDecimal.ROUND_HALF_UP).toLong())
+    val totalBuy get() = userAccountData.value.totalBuy
+    val totalBuyStringFormat: String get() = DecimalFormat("#,###").format(BigDecimal(userAccountData.value.totalBuy).setScale(0, BigDecimal.ROUND_HALF_UP).toLong())
 
-    val possessingCoins get() = userData.value.possessingCoins
-    val bookmark get() = userData.value.bookmark
+    val possessingCoins get() = userAccountData.value.possessingCoins
+    val bookmark get() = userAccountData.value.bookmark
 
 
 
@@ -27,17 +26,17 @@ class UserViewModel : ViewModel() {
             averagePrice = keyIterator.next().toDouble()
         return BigDecimal(averagePrice).setScale(8, BigDecimal.ROUND_HALF_UP)
     }
-    fun isSymbolNull(symbol: String): Boolean = userData.value.possessingCoins[symbol] == null
+    fun isSymbolNull(symbol: String): Boolean = userAccountData.value.possessingCoins[symbol] == null
     fun getCoinCount(symbol: String): BigDecimal =
-        BigDecimal(userData.value.possessingCoins[symbol]?.values?.sum() ?: 0.0).setScale(8, BigDecimal.ROUND_HALF_UP)
+        BigDecimal(userAccountData.value.possessingCoins[symbol]?.values?.sum() ?: 0.0).setScale(8, BigDecimal.ROUND_HALF_UP)
 
     fun buy(symbol: String, price: Double, count: Double, onMessage: (String) -> Unit) {
 
-        val toastMessage = if(userData.value.krw >= (price * count).toLong()) {
+        val toastMessage = if(userAccountData.value.krw >= (price * count).toLong()) {
             if(price * count < 5000.0)
                 "최소 매수 금액은 5000krw 입니다"
             else {
-                userRepository.buy(symbol, price, count)
+                userAccountRepository.buy(symbol, price, count)
                 "매수가 완료되었습니다"
             }
         }
@@ -52,7 +51,7 @@ class UserViewModel : ViewModel() {
             if(count <= 0.0)
                 "알맞은 수량을 입력해주세요"
             else {
-                userRepository.sell(symbol, price, count)
+                userAccountRepository.sell(symbol, price, count)
                 "매도가 완료되었습니다"
             }
         }
@@ -63,10 +62,10 @@ class UserViewModel : ViewModel() {
 
     fun bookmark(symbol: String?) {
         if (symbol != null) {
-            if(userData.value.bookmark.contains(symbol))
-                userRepository.removeBookmark(symbol)
+            if(userAccountData.value.bookmark.contains(symbol))
+                userAccountRepository.removeBookmark(symbol)
             else
-                userRepository.addBookmark(symbol)
+                userAccountRepository.addBookmark(symbol)
         }
 
     }

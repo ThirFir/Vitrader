@@ -1,8 +1,9 @@
 package com.example.vitrader.utils.model
 
+import android.graphics.Bitmap
 import com.google.gson.annotations.SerializedName
 
-data class Coin(val info: Info, var ticker: Ticker) {
+data class Coin(val info: Info, var ticker: Ticker, var image: Bitmap? = null) {
     data class Info(
         @SerializedName("korean_name") val name: String,
         @SerializedName("market") val symbol: String,
@@ -25,7 +26,7 @@ data class Coin(val info: Info, var ticker: Ticker) {
         @SerializedName("acc_trade_price") var acc_trade_price: Double,      // 누적 거래대금(UTC 0시 기준)
         @SerializedName("acc_trade_price_24h") var acc_trade_price_24h: Double,  // 24시간 누적 거래대금
         @SerializedName("trade_date") var trade_date: String,                  // 최근 거래 일자(UTC) yyyyMMdd
-        @SerializedName("trade_time") var trade_time: String,                  // 최근 거래 시작(UTC) HHmmss
+        @SerializedName("trade_time") var trade_time: String,                  // 최근 거래 시각(UTC) HHmmss
         @SerializedName("ask_bid") var ask_bid: String,                        // 매수/매도 구분 (ASK : 매도, BID : 매수)
         @SerializedName("acc_ask_volume") var acc_ask_volume: Double,          // 누적 매도량
         @SerializedName("acc_bid_volume") var acc_bid_volume: Double,          // 누적 매수량

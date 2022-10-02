@@ -9,13 +9,13 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.KeyboardType
 import com.example.vitrader.utils.viewmodel.CoinViewModel
-import com.example.vitrader.utils.viewmodel.UserViewModel
+import com.example.vitrader.utils.viewmodel.UserAccountViewModel
 import java.lang.IllegalArgumentException
 
 
 // 지정가 매수 - 시장가가 지정가보다 낮을 경우 바로 매수됨
 @Composable
-fun BuyByFixedPriceView(coinViewModel: CoinViewModel, userViewModel: UserViewModel) {
+fun BuyByFixedPriceView(coinViewModel: CoinViewModel, userAccountViewModel: UserAccountViewModel) {
 
     val context = LocalContext.current
     val symbol = coinViewModel.coin?.info?.symbol
@@ -55,7 +55,7 @@ fun BuyByFixedPriceView(coinViewModel: CoinViewModel, userViewModel: UserViewMod
         }
 
         Button(onClick = {
-            userViewModel.buy(symbol = symbol!!, price = coinViewModel.coin?.ticker?.trade_price!!, count = count) {
+            userAccountViewModel.buy(symbol = symbol!!, price = coinViewModel.coin?.ticker?.trade_price!!, count = count) {
                 Toast.makeText(context, it, Toast.LENGTH_SHORT).show()
             }
         }) {
@@ -65,6 +65,6 @@ fun BuyByFixedPriceView(coinViewModel: CoinViewModel, userViewModel: UserViewMod
 }
 
 @Composable
-fun BuyByReserveView(coinViewModel: CoinViewModel, userViewModel: UserViewModel) {
+fun BuyByReserveView(coinViewModel: CoinViewModel, userAccountViewModel: UserAccountViewModel) {
 
 }

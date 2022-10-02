@@ -11,13 +11,13 @@ import com.example.vitrader.navigation.TransactionViewPager
 import com.example.vitrader.theme.VitraderTheme
 import com.example.vitrader.utils.model.CoinRepository
 import com.example.vitrader.utils.viewmodel.CoinViewModel
-import com.example.vitrader.utils.viewmodel.UserViewModel
+import com.example.vitrader.utils.viewmodel.UserAccountViewModel
 import com.example.vitrader.utils.viewmodel.CoinViewModelFactory
 import java.lang.IllegalArgumentException
 
 class TransactionActivity : ComponentActivity() {
     private lateinit var coinViewModel: CoinViewModel
-    private lateinit var userViewModel: UserViewModel
+    private lateinit var userAccountViewModel: UserAccountViewModel
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -27,7 +27,7 @@ class TransactionActivity : ComponentActivity() {
         setContent{
             VitraderTheme {
                 Surface(color = MaterialTheme.colors.background) {
-                    TransactionViewPager(coinViewModel, userViewModel)
+                    TransactionViewPager(coinViewModel, userAccountViewModel)
                 }
             }
         }
@@ -38,7 +38,7 @@ class TransactionActivity : ComponentActivity() {
         val symbol = bundle?.getString("symbol") ?: { throw IllegalArgumentException("Exception occurred while getting coin symbol") }
 
         coinViewModel = ViewModelProvider(this, CoinViewModelFactory(symbol as String))[CoinViewModel::class.java]
-        userViewModel = ViewModelProvider(this)[UserViewModel::class.java]
+        userAccountViewModel = ViewModelProvider(this)[UserAccountViewModel::class.java]
     }
 
     override fun onRestart() {

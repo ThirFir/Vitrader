@@ -3,91 +3,70 @@ package com.example.vitrader.navigation
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Star
-import androidx.compose.material.icons.outlined.Star
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.vitrader.R
-import com.example.vitrader.utils.viewmodel.UserViewModel
+import com.example.vitrader.utils.viewmodel.UserAccountViewModel
 import com.example.vitrader.screen.transaction.ChartScreen
 import com.example.vitrader.screen.transaction.TransactionScreen
 import com.example.vitrader.utils.NumberFormat
 import com.example.vitrader.utils.noRippleClickable
 import com.example.vitrader.utils.viewmodel.CoinViewModel
-import com.google.accompanist.pager.ExperimentalPagerApi
-import com.google.accompanist.pager.HorizontalPager
-import com.google.accompanist.pager.pagerTabIndicatorOffset
-import com.google.accompanist.pager.rememberPagerState
-import kotlinx.coroutines.launch
 
 
 @Composable
-fun TransactionViewPager(coinViewModel: CoinViewModel, userViewModel: UserViewModel) {
-    Scaffold(topBar = { TransactionTopAppBar(coinViewModel, userViewModel) }) {
+fun TransactionViewPager(coinViewModel: CoinViewModel, userAccountViewModel: UserAccountViewModel) {
+    Scaffold(topBar = { TransactionTopAppBar(coinViewModel, userAccountViewModel) }) {
 
         Column() {
             TransactionSecondaryTopAppBar(coinViewModel)
-            TransactionNavigationTabLayout(coinViewModel, userViewModel)
+            TransactionNavigationTabLayout(coinViewModel, userAccountViewModel)
         }
     }
 }
 
-// TransactionActivity Tab layout with viewpager
-@OptIn(ExperimentalPagerApi::class)
+
 @Composable
-fun TransactionNavigationTabLayout(coinViewModel: CoinViewModel, userViewModel: UserViewModel) {
+fun TransactionNavigationTabLayout(coinViewModel: CoinViewModel, userAccountViewModel: UserAccountViewModel) {
 
     val TRANSACTION_PAGE = 0
     val CHART_PAGE = 1
-    val pagerState = rememberPagerState()
-    val coroutineScope = rememberCoroutineScope()
-    val titles = listOf("주문", "차트")
 
+    val titles = listOf("주문", "차트")
+    var selectedTab by remember { mutableStateOf(0) }
 
     Column(Modifier.fillMaxSize(), Arrangement.Center) {
-        TabRow(selectedTabIndex = pagerState.currentPage,
-            divider = {},
-            indicator = { tabPositions ->
-                TabRowDefaults.Indicator(
-                    Modifier.pagerTabIndicatorOffset(pagerState, tabPositions)
-                )
-            }) {
+        TabRow(selectedTabIndex = selectedTab ) {
             titles.forEachIndexed { index, title ->
-                Tab(selected = pagerState.currentPage == index, onClick = {
-                    coroutineScope.launch {
-                        pagerState.scrollToPage(index)
-                    }
+                Tab(selected = selectedTab == index, onClick = {
+                    selectedTab = index
                 }) {
                     Text(title)
                 }
             }
         }
-
-        HorizontalPager(
-            count = titles.size,
-            state = pagerState,
-        ) { page ->
-            when(page) {
-                TRANSACTION_PAGE -> TransactionScreen(coinViewModel, userViewModel)
-                CHART_PAGE -> ChartScreen(coinViewModel, userViewModel)
-            }
+        Box(Modifier.fillMaxSize()) {
+            if(selectedTab == TRANSACTION_PAGE)
+                TransactionScreen(coinViewModel, userAccountViewModel)
+            else if(selectedTab == CHART_PAGE)
+                ChartScreen(coinViewModel, userAccountViewModel)
         }
+
     }
 }
 
 @Composable
-fun TransactionTopAppBar(coinViewModel: CoinViewModel, userViewModel: UserViewModel) {
+fun TransactionTopAppBar(coinViewModel: CoinViewModel, userAccountViewModel: UserAccountViewModel) {
     val symbol = coinViewModel.coin?.info?.symbol
-    var bookmark by remember { mutableStateOf(userViewModel.bookmark.contains(symbol)) }
+    var bookmark by remember { mutableStateOf(userAccountViewModel.bookmark.contains(symbol)) }
 
     TopAppBar(modifier = Modifier.background(color = Color(0xff1A1B2F))) {
         Column() {
@@ -113,7 +92,7 @@ fun TransactionTopAppBar(coinViewModel: CoinViewModel, userViewModel: UserViewMo
                         .size(28.dp)
                         .noRippleClickable {
                             bookmark = !bookmark
-                            userViewModel.bookmark(symbol)
+                            userAccountViewModel.bookmark(symbol)
                         },
                     tint = tint
                 )
@@ -128,8 +107,10 @@ fun TransactionSecondaryTopAppBar(coinViewModel: CoinViewModel) {
 
     val color = NumberFormat.color(coinViewModel.coin?.ticker?.change ?: "")
 
-    Row() {
-        Column(modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp, horizontal = 24.dp)) {
+    Row(modifier = Modifier.padding(vertical = 4.dp, horizontal = 24.dp), verticalAlignment = Alignment.CenterVertically) {
+        Column(modifier = Modifier
+            .fillMaxWidth()
+            .weight(1f)) {
             // 현재가
             Text(text = NumberFormat.coinPrice(coinViewModel.coin?.ticker?.trade_price ?: 0.0),
                 fontSize = 20.sp, color = color)
@@ -145,5 +126,8 @@ fun TransactionSecondaryTopAppBar(coinViewModel: CoinViewModel) {
                     color = color)
             }
         }
+        Image(bitmap = coinViewModel.coin?.image?.asImageBitmap() ?: ImageBitmap(1, 1),
+            contentDescription = "ic_coin",
+            modifier = Modifier.size(40.dp))
     }
 }

@@ -1,5 +1,7 @@
 package com.example.vitrader.utils.model
 
+import android.graphics.Bitmap
+import android.util.Log
 import androidx.compose.runtime.mutableStateMapOf
 import com.example.vitrader.utils.db.UpbitWebSocketListener
 import kotlinx.coroutines.CoroutineScope
@@ -15,13 +17,14 @@ object CoinRepository {
         launchGettingExternalCoinData()
     }
 
+    private fun getImage(ticker: Coin.Ticker): Bitmap? = _coins[ticker.market]?.image
+
     fun addCoin(coin: Coin) {
         _coins[coin.info.symbol] = coin
-
     }
 
     fun updateTicker(newTicker: Coin.Ticker) {
-        _coins[newTicker.market] = Coin(_coins[newTicker.market]?.info!!, newTicker)
+        _coins[newTicker.market] = Coin(_coins[newTicker.market]?.info!!, newTicker, getImage(newTicker))
     }
 
     fun launchGettingExternalCoinData() {

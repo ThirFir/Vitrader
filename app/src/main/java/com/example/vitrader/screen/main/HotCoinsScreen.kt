@@ -1,5 +1,6 @@
 package com.example.vitrader.screen.main
 
+import android.graphics.Bitmap
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -12,6 +13,8 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -87,7 +90,7 @@ fun HottestCoinView(hottestCoin : Coin, onClicked : (String) -> Unit) {
                         color = color)
 
                 }
-                Image(painter = painterResource(id = R.drawable.ic_coin),
+                Image(bitmap = hottestCoin.image?.asImageBitmap() ?: ImageBitmap(1, 1),
                     contentDescription = "ic_coin",
                     modifier = Modifier.size(28.dp))
             }
@@ -98,8 +101,7 @@ fun HottestCoinView(hottestCoin : Coin, onClicked : (String) -> Unit) {
 @Composable
 fun HotCoinsListView(hotCoinList : List<Coin>, onClicked : (String) -> Unit) {
     Column() {
-//        Text("Hot", Modifier.padding(start = 4.dp))
-//        Spacer(Modifier.size(4.dp))
+
         LazyColumn(Modifier.width(320.dp), verticalArrangement = Arrangement.spacedBy(3.dp)) {
             items(hotCoinList) {
                 ItemCoinViewWithIcon(coin = it, onClicked)
@@ -121,7 +123,7 @@ fun ItemCoinViewWithIcon(coin : Coin, onClicked : (String) -> Unit) {
             .padding(horizontal = 12.dp)
             .height(72.dp)
             .fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-            Image(painterResource(id = R.drawable.ic_coin),
+            Image(bitmap = coin.image?.asImageBitmap() ?: ImageBitmap(1, 1),
                 contentDescription = null,
                 Modifier
                     .padding(4.dp)

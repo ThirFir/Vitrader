@@ -79,11 +79,21 @@ dependencies {
     implementation platform('com.google.firebase:firebase-bom:30.2.0')
     implementation 'com.google.firebase:firebase-analytics'
     implementation 'com.google.firebase:firebase-auth-ktx:21.0.8'
-    implementation 'com.google.firebase:firebase-firestore-ktx:24.3.0'
+    implementation 'com.google.firebase:firebase-firestore-ktx:24.3.1'
     implementation 'com.google.firebase:firebase-database:20.0.6'
     implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.6.1'
     implementation 'com.google.android.gms:play-services-auth:20.3.0'
+    implementation 'com.google.firebase:firebase-storage'
+
+    implementation 'com.firebaseui:firebase-ui-auth:8.0.1'
+    implementation 'com.firebaseui:firebase-ui-database:8.0.1'
+    implementation 'com.google.firebase:firebase-database-ktx'
+    implementation 'com.google.firebase:firebase-storage-ktx'
+    implementation 'com.google.firebase:firebase-auth-ktx'
 
     implementation "com.google.accompanist:accompanist-pager:0.20.1"
     implementation "com.google.accompanist:accompanist-pager-indicators:0.20.1"
+    implementation 'com.github.PhilJay:MPAndroidChart:v3.1.0'
+
+    implementation("io.coil-kt:coil-compose:2.0.0-rc01")
 }

@@ -24,7 +24,7 @@ import com.example.vitrader.theme.Blue1200
 import com.example.vitrader.utils.*
 import com.example.vitrader.utils.model.Coin
 import com.example.vitrader.utils.viewmodel.CoinListViewModel
-import com.example.vitrader.utils.viewmodel.UserViewModel
+import com.example.vitrader.utils.viewmodel.UserAccountViewModel
 import java.util.*
 
 enum class SortState {
@@ -43,7 +43,7 @@ enum class ListTab {
 }
 
 @Composable
-fun CoinListScreen(coinListViewModel: CoinListViewModel, userViewModel: UserViewModel, onCoinClicked: (String) -> Unit) {
+fun CoinListScreen(coinListViewModel: CoinListViewModel, userAccountViewModel: UserAccountViewModel, onCoinClicked: (String) -> Unit) {
     Column(modifier = Modifier
         .padding(0.dp)
         .fillMaxSize(),
@@ -59,7 +59,7 @@ fun CoinListScreen(coinListViewModel: CoinListViewModel, userViewModel: UserView
 
         CoinSortBar(sortState) { sortState.value = it }
 
-        AllCoinsListView(coinListViewModel, userViewModel, sortState.value, search, tabState, onCoinClicked)
+        AllCoinsListView(coinListViewModel, userAccountViewModel, sortState.value, search, tabState, onCoinClicked)
 
     }
 }
@@ -186,14 +186,14 @@ fun CoinSortBar(sortState: MutableState<SortState>, sort: (SortState) -> Unit) {
 
 
 @Composable
-fun AllCoinsListView(coinListViewModel: CoinListViewModel, userViewModel: UserViewModel, sortState: SortState, search: String, tab: ListTab, onCoinClicked: (String) -> Unit) {
+fun AllCoinsListView(coinListViewModel: CoinListViewModel, userAccountViewModel: UserAccountViewModel, sortState: SortState, search: String, tab: ListTab, onCoinClicked: (String) -> Unit) {
     val scroll = rememberLazyListState()
 
     Surface(modifier = Modifier
         .fillMaxSize()
        ) {
         LazyColumn(state = scroll) {
-            items(sortedItems(coinListViewModel, userViewModel, sortState, search, tab)) {
+            items(sortedItems(coinListViewModel, userAccountViewModel, sortState, search, tab)) {
                 ItemCoinViewWithoutIcon(
                     coinListViewModel = coinListViewModel,
                     coin = it,
@@ -222,7 +222,7 @@ fun AllCoinsListView(coinListViewModel: CoinListViewModel, userViewModel: UserVi
     }
 }
 
-private fun sortedItems(coinListViewModel: CoinListViewModel, userViewModel: UserViewModel, sortState: SortState, search: String, tab: ListTab) : List<Coin> {
+private fun sortedItems(coinListViewModel: CoinListViewModel, userAccountViewModel: UserAccountViewModel, sortState: SortState, search: String, tab: ListTab) : List<Coin> {
 
     return when (sortState) {
         SortState.DEFAULT -> coinListViewModel.coins.values.sortedByDescending { it.ticker.acc_trade_price_24h }
@@ -238,8 +238,8 @@ private fun sortedItems(coinListViewModel: CoinListViewModel, userViewModel: Use
         .filter {                                                   // 탭 filter
             when (tab) {
                 ListTab.ALL -> true
-                ListTab.BOOKMARK -> { userViewModel.bookmark.contains(it.info.symbol) }
-                ListTab.POSSESS -> { userViewModel.possessingCoins.contains(it.info.symbol)}
+                ListTab.BOOKMARK -> { userAccountViewModel.bookmark.contains(it.info.symbol) }
+                ListTab.POSSESS -> { userAccountViewModel.possessingCoins.contains(it.info.symbol)}
             }
         }
 }

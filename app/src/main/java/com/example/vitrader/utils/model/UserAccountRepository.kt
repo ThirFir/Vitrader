@@ -33,7 +33,7 @@ object UserAccountRepository {
 
     fun buy(symbol: String, price: Double, count: Double) {
 
-        val chargedCount = count * (1 - FEE)
+        val chargedCount = count * (1 - FEE)        // 수수료 부과된 개수
         val newUserData = userAccountData.value.copy()
 
         // About "possessingCoins"
@@ -43,10 +43,13 @@ object UserAccountRepository {
         var averagePrice = price
         var possessCount = chargedCount
 
+        var prevTotalBuyOfThis = 0L
+
         val keyIterator = newUserData.possessingCoins[symbol]?.keys?.iterator()
         if(keyIterator?.hasNext() == true) {     // 이미 보유 중인 코인이면
             val prevAveragePrice = keyIterator.next()     // 기존 평균가
             val prevCount = newUserData.possessingCoins[symbol]?.get(prevAveragePrice) ?: 0.0      // 기존 보유 개수
+            prevTotalBuyOfThis = (prevAveragePrice.toDouble() * prevCount).roundToLong()
 
             possessCount = prevCount + chargedCount
 
@@ -62,7 +65,8 @@ object UserAccountRepository {
         if(newUserData.krw <= 1) newUserData.krw = 0
 
         // About "totalBuy"
-        newUserData.totalBuy += (price * chargedCount).roundToLong()
+        newUserData.totalBuy -= prevTotalBuyOfThis
+        newUserData.totalBuy += (averagePrice * possessCount).roundToLong()
 
         update(newUserData)
     }

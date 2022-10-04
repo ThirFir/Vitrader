@@ -1,5 +1,6 @@
 package com.example.vitrader.screen.main
 
+import android.util.Log
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.BorderStroke
@@ -46,11 +47,24 @@ fun TotalPossessView(userAccountViewModel: UserAccountViewModel, coinListViewMod
     var totalEvaluation = 0L      // 총 평가
     val userSymbolIterator = userAccountViewModel.possessingCoins.keys.iterator()
     val symbolList = mutableListOf<String>()
+    val isExpanded = remember { mutableStateListOf<Boolean>() }
+    var prevSize by remember { mutableStateOf(0) }
+
     for(symbol in userSymbolIterator) {
-        totalEvaluation += (userAccountViewModel.getCoinCount(symbol)
-            .toDouble() * (coinListViewModel.coins[symbol]?.ticker?.trade_price ?: 0.0)).roundToLong()
-        symbolList.add(symbol)
+        if(symbolList.size < userAccountViewModel.possessingCoins.size) {
+            symbolList.add(symbol)
+        }
+        if(isExpanded.size < symbolList.size)
+            isExpanded.add(false)
+        totalEvaluation += (userAccountViewModel.getCoinCount(symbol).toDouble()
+                * (coinListViewModel.coins[symbol]?.ticker?.trade_price ?: 0.0)).roundToLong()
     }
+    if(prevSize != 0 && prevSize != symbolList.size){
+        isExpanded.clear()
+        for(i in 0..prevSize)
+            isExpanded.add(false)
+    }
+    prevSize = symbolList.size
 
     var userEvalChange by remember { mutableStateOf("EVEN") }
     userEvalChange = if(totalEvaluation - userAccountViewModel.totalBuy > 0) "RISE" else if(totalEvaluation - userAccountViewModel.totalBuy < 0) "FALL" else "EVEN"
@@ -106,17 +120,14 @@ fun TotalPossessView(userAccountViewModel: UserAccountViewModel, coinListViewMod
                 .fillMaxSize()
                 .weight(3f)) {
 
-                val expanded = remember { mutableStateListOf<Boolean>() }
-                for (i in symbolList.indices)
-                    expanded.add(false)
-
                 LazyColumn {
                     itemsIndexed(symbolList){ index, symbol ->
-                        val coinEval = (coinListViewModel.coins[symbol]?.ticker?.trade_price ?: 0.0) * userAccountViewModel.getCoinCount(symbol).toDouble()
-                        val userEval = userAccountViewModel.getAverage(symbol).toDouble() * userAccountViewModel.getCoinCount(symbol).toDouble()
+                        val coinEval = (coinListViewModel.coins[symbol]?.ticker?.trade_price ?: 0.0) * userAccountViewModel.getCoinCount(symbol).toDouble()     // 코인 현재가 * 보유 개수
+                        val userEval = userAccountViewModel.getAverage(symbol).toDouble() * userAccountViewModel.getCoinCount(symbol).toDouble()                // 매수 평균가 * 보유 개수
 
-
-                        ExpandableCard(contentColor = Color.White, modifier = Modifier.fillMaxWidth(), backgroundColor = Blue1800, headerContent = {
+                        ExpandableCard(isExpanded = isExpanded[index], contentColor = Color.White, modifier = Modifier.fillMaxWidth(), backgroundColor = Blue1800,
+                            onClick = { isExpanded[index] = !isExpanded[index] },
+                            headerContent = {
                             Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(horizontal = 8.dp)) {
                                 Text(coinListViewModel.coins[symbol]?.info?.name ?: "-", modifier = Modifier.weight(1f), fontWeight = FontWeight.Bold)        // 코인명
 
@@ -192,15 +203,17 @@ fun PossessList() {
 @OptIn(ExperimentalMaterialApi::class)
 @Composable
 fun ExpandableCard(
+    isExpanded: Boolean,
     headerContent: @Composable () -> Unit, // Header
     contentColor: Color, // Color
     modifier: Modifier = Modifier,
     backgroundColor: Color = Color.White,
     strokeColor: Color = contentColor,
-    detailContent: @Composable () -> Unit
+    onClick: () -> Unit,
+    detailContent: @Composable () -> Unit,
 ) {
-    var expand by remember { mutableStateOf(false) } // Expand State
-    val rotationState by animateFloatAsState(if (expand) 180f else 0f) // Rotation State
+    //var expand by remember { mutableStateOf(false) } // Expand State
+    val rotationState by animateFloatAsState(if (isExpanded) 180f else 0f) // Rotation State
     var stroke by remember { mutableStateOf(1) } // Stroke State
     Card(
         modifier = modifier
@@ -215,8 +228,9 @@ fun ExpandableCard(
         shape = RoundedCornerShape(8.dp), // Shape
         border = BorderStroke(stroke.dp, strokeColor), // Stroke Width and Color
         onClick = {
-            expand = !expand
-            stroke = if (expand) 2 else 1
+            //expand = !expand
+            //stroke = if (expand) 2 else 1
+            onClick()
         }
     ) {
         Column(
@@ -242,7 +256,7 @@ fun ExpandableCard(
                         .weight(.1f)
                 )
             }
-            if (expand) {
+            if (isExpanded) {
 
                 Box() {
                     detailContent()

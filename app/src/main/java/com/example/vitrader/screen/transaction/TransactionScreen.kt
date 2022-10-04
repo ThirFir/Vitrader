@@ -14,6 +14,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.vitrader.theme.Blue1600
@@ -86,8 +87,7 @@ internal fun TransactingScreen(coinViewModel: CoinViewModel, userAccountViewMode
     val selectedBuyWay = remember { mutableStateListOf(true, false, false) }
     val buyWayList = listOf("지정가", "시장가", "예약")
 
-    val symbol = coinViewModel.coin?.info?.symbol ?: throw IllegalArgumentException("Can't load symbol")
-
+    val symbol = coinViewModel.coin?.info?.symbol ?: throw IllegalArgumentException("Failed load symbol")
 
 
     if(selectedTap == TransactionState.BUY || selectedTap == TransactionState.SELL) {
@@ -121,10 +121,10 @@ internal fun TransactingScreen(coinViewModel: CoinViewModel, userAccountViewMode
 
                             else userAccountViewModel.getCoinCount(symbol).toPlainString() + " " + SymbolFormat.get(
                                 coinViewModel.coin?.info?.symbol!!) + "\n" + "≈" + NumberFormat.krwFormat(
-                                coinViewModel.coin!!.ticker.trade_price * userAccountViewModel.getCoinCount(symbol).toDouble())
+                                coinViewModel.coin!!.ticker.trade_price * userAccountViewModel.getCoinCount(symbol).toDouble()) + " KRW"
 
                         }
-                    Text(textValue, fontSize = 13.sp, fontWeight = FontWeight.Bold)
+                    Text(textValue, fontSize = 13.sp, fontWeight = FontWeight.Bold, textAlign = TextAlign.End)
                 }
             }
             if (selectedBuyWay[0]) BuyByFixedPriceView(coinViewModel, userAccountViewModel)

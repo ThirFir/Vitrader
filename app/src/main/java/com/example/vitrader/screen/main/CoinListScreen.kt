@@ -21,6 +21,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.vitrader.theme.Blue1200
+import com.example.vitrader.theme.Blue2000
 import com.example.vitrader.utils.*
 import com.example.vitrader.utils.model.Coin
 import com.example.vitrader.utils.viewmodel.CoinListViewModel
@@ -53,7 +54,7 @@ fun CoinListScreen(coinListViewModel: CoinListViewModel, userAccountViewModel: U
         CoinSearchBar(coinListViewModel) { search = it }
 
         var tabState by remember { mutableStateOf(ListTab.ALL) }
-        CoinListFilterBar { tabState = it }
+        CoinListFilterBar(tabState) { tabState = it }
 
         val sortState = remember { mutableStateOf(SortState.DEFAULT) }
 
@@ -96,15 +97,15 @@ fun CoinSearchBar(coinListViewModel: CoinListViewModel, onValueChanged: (String)
 }
 
 @Composable
-fun CoinListFilterBar(tab: (ListTab) -> Unit) {
+fun CoinListFilterBar(tabState: ListTab, tab: (ListTab) -> Unit) {
     Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Start) {
-        TextButton(onClick = { tab(ListTab.ALL)} ) {
+        TextButton(modifier = Modifier.background(if(tabState == ListTab.ALL) Blue1200 else Blue2000), onClick = { tab(ListTab.ALL)} ) {
             Text("전체", color = Color.White)
         }
-        TextButton(onClick = { tab(ListTab.BOOKMARK)} ) {
+        TextButton(modifier = Modifier.background(if(tabState == ListTab.BOOKMARK) Blue1200 else Blue2000), onClick = { tab(ListTab.BOOKMARK)} ) {
             Text("관심", color = Color.White)
         }
-        TextButton(onClick = { tab(ListTab.POSSESS)} ) {
+        TextButton(modifier = Modifier.background(if(tabState == ListTab.POSSESS) Blue1200 else Blue2000), onClick = { tab(ListTab.POSSESS)} ) {
             Text("보유", color = Color.White)
         }
     }

@@ -100,15 +100,15 @@ fun TotalPossessView(userAccountViewModel: UserAccountViewModel, coinListViewMod
                         }
                     }
                     Column(modifier = Modifier.fillMaxWidth(), horizontalAlignment = Alignment.End) {
-                        Row(verticalAlignment = Alignment.Bottom, modifier = Modifier.fillMaxWidth()) {
+                        Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
                             Text("보유 KRW", fontSize = 12.sp, modifier = Modifier.weight(1f), textAlign = TextAlign.End)
                             Text(userAccountViewModel.krwStringFormat, color = Color.White, modifier = Modifier.width(150.dp), textAlign = TextAlign.End)
                         }
-                        Row(verticalAlignment = Alignment.Bottom, modifier = Modifier.fillMaxWidth()) {
+                        Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
                             Text("총 평가", fontSize = 12.sp, modifier = Modifier.weight(1f), textAlign = TextAlign.End)
                             Text(NumberFormat.krwFormat(totalEvaluation), color = Color.White, modifier = Modifier.width(150.dp), textAlign = TextAlign.End)
                         }
-                        Row(verticalAlignment = Alignment.Bottom, modifier = Modifier.fillMaxWidth()) {
+                        Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
                             Text("총 매수", fontSize = 12.sp, modifier = Modifier.weight(1f), textAlign = TextAlign.End)
                             Text(userAccountViewModel.totalBuyStringFormat, color = Color.White, modifier = Modifier.width(150.dp), textAlign = TextAlign.End)
                         }

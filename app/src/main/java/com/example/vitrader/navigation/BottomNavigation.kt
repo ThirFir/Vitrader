@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.material.BottomNavigation
 import androidx.compose.material.BottomNavigationItem
 import androidx.compose.material.Icon
+import androidx.compose.material.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -22,6 +23,7 @@ import com.example.vitrader.R
 import com.example.vitrader.screen.main.*
 import com.example.vitrader.theme.Blue1600
 import com.example.vitrader.theme.Blue2000
+import com.example.vitrader.utils.db.UpbitWebSocketListener
 import com.example.vitrader.utils.viewmodel.CoinListViewModel
 import com.example.vitrader.utils.viewmodel.UserAccountViewModel
 
@@ -52,7 +54,7 @@ fun BottomNavHost(userAccountViewModel: UserAccountViewModel, coinListViewModel:
             HotCoinsScreen(coinListViewModel) { onCoinClicked(it) }
         }
         composable(MainScreenDestination.COIN_LIST.route) {
-            CoinListScreen(coinListViewModel, userAccountViewModel) { onCoinClicked(it)}
+            CoinListScreen(coinListViewModel, userAccountViewModel) { onCoinClicked(it) }
         }
         composable(MainScreenDestination.RANKING.route) {
             RankingScreen()
@@ -103,5 +105,9 @@ fun BottomNavigationView(navController: NavHostController, mainScreenList: List<
     }
 }
 
+@Composable
+fun LoadingView() {
+    Text("로딩중")
+}
 
 

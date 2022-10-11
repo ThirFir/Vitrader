@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.KeyboardArrowDown
@@ -14,10 +15,12 @@ import androidx.compose.material.icons.filled.Search
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.vitrader.theme.Blue1200
@@ -45,6 +48,7 @@ enum class ListTab {
 
 @Composable
 fun CoinListScreen(coinListViewModel: CoinListViewModel, userAccountViewModel: UserAccountViewModel, onCoinClicked: (String) -> Unit) {
+
     Column(modifier = Modifier
         .padding(0.dp)
         .fillMaxSize(),
@@ -53,11 +57,14 @@ fun CoinListScreen(coinListViewModel: CoinListViewModel, userAccountViewModel: U
         var search by remember { mutableStateOf("") }
         CoinSearchBar(coinListViewModel) { search = it }
 
+        Spacer(Modifier.height(6.dp))
+
         var tabState by remember { mutableStateOf(ListTab.ALL) }
         CoinListFilterBar(tabState) { tabState = it }
 
-        val sortState = remember { mutableStateOf(SortState.DEFAULT) }
+        Spacer(Modifier.height(6.dp))
 
+        val sortState = remember { mutableStateOf(SortState.DEFAULT) }
         CoinSortBar(sortState) { sortState.value = it }
 
         AllCoinsListView(coinListViewModel, userAccountViewModel, sortState.value, search, tabState, onCoinClicked)
@@ -86,7 +93,11 @@ fun CoinSearchBar(coinListViewModel: CoinListViewModel, onValueChanged: (String)
                }
 
            },
-           singleLine = true, textStyle = MaterialTheme.typography.body1,
+           singleLine = true, textStyle = LocalTextStyle.current.copy(
+               color = Color.White,
+               fontSize = 16.sp,
+               fontWeight = FontWeight.Bold
+           ),
            leadingIcon =  { Icon(imageVector = Icons.Default.Search, contentDescription = "ic_search") },
            colors = TextFieldDefaults.textFieldColors(backgroundColor = MaterialTheme.colors.background),
            placeholder = { Text("코인명/심볼 검색") },
@@ -99,13 +110,19 @@ fun CoinSearchBar(coinListViewModel: CoinListViewModel, onValueChanged: (String)
 @Composable
 fun CoinListFilterBar(tabState: ListTab, tab: (ListTab) -> Unit) {
     Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Start) {
-        TextButton(modifier = Modifier.background(if(tabState == ListTab.ALL) Blue1200 else Blue2000), onClick = { tab(ListTab.ALL)} ) {
+        Spacer(Modifier.width(6.dp))
+        Button(onClick = { tab(ListTab.ALL)}, colors = ButtonDefaults.buttonColors(backgroundColor = if(tabState == ListTab.ALL) Blue1200 else Blue2000),
+            modifier = Modifier.clip(RoundedCornerShape(16.dp))) {
             Text("전체", color = Color.White)
         }
-        TextButton(modifier = Modifier.background(if(tabState == ListTab.BOOKMARK) Blue1200 else Blue2000), onClick = { tab(ListTab.BOOKMARK)} ) {
+        Spacer(Modifier.width(2.dp))
+        Button(onClick = { tab(ListTab.BOOKMARK)}, colors = ButtonDefaults.buttonColors(backgroundColor = if(tabState == ListTab.BOOKMARK) Blue1200 else Blue2000),
+            modifier = Modifier.clip(RoundedCornerShape(16.dp)) ) {
             Text("관심", color = Color.White)
         }
-        TextButton(modifier = Modifier.background(if(tabState == ListTab.POSSESS) Blue1200 else Blue2000), onClick = { tab(ListTab.POSSESS)} ) {
+        Spacer(Modifier.width(2.dp))
+        Button(onClick = { tab(ListTab.POSSESS)}, colors = ButtonDefaults.buttonColors(backgroundColor = if(tabState == ListTab.POSSESS) Blue1200 else Blue2000),
+            modifier = Modifier.clip(RoundedCornerShape(16.dp)) ) {
             Text("보유", color = Color.White)
         }
     }
@@ -200,7 +217,7 @@ fun AllCoinsListView(coinListViewModel: CoinListViewModel, userAccountViewModel:
                     coin = it,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(64.dp)
+                        .height(60.dp)
                         .clickable {
                             onCoinClicked(it.info.symbol)
                         }
@@ -251,7 +268,6 @@ fun ItemCoinViewWithoutIcon(coinListViewModel: CoinListViewModel, coin : Coin, m
     val c = coinListViewModel.coins[coin.info.symbol]!!
     val color = NumberFormat.color(coin.ticker.change)
 
-    val context = LocalContext.current
     Row(modifier = modifier.padding(start = 4.dp),
         verticalAlignment = Alignment.CenterVertically) {
 

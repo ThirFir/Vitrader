@@ -3,6 +3,7 @@ package com.example.vitrader
 import android.content.Intent
 import android.os.Bundle
 import android.util.Log
+import android.util.Log.e
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.*
@@ -24,6 +25,7 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.navigation.compose.rememberNavController
 import com.example.vitrader.navigation.BottomNavHost
 import com.example.vitrader.navigation.BottomNavigationView
+import com.example.vitrader.navigation.LoadingView
 import com.example.vitrader.screen.main.getMainScreens
 import com.example.vitrader.screen.stringToBitmap
 import com.example.vitrader.theme.VitraderTheme
@@ -80,8 +82,6 @@ class MainActivity : ComponentActivity() {
     override fun onRestart() {
         super.onRestart()
         Log.d("MainActivity", "OnRestart")
-        if(!UpbitWebSocketListener.isOpened)
-            CoinRepository.launchGettingExternalCoinData()
     }
 }
 
@@ -90,6 +90,7 @@ fun WholeScreenScaffold(userAccountViewModel: UserAccountViewModel, userProfileV
 
     val navController = rememberNavController()
     val mainScreenDestinationList = getMainScreens()
+
     Scaffold(
         topBar = {
             MainTopAppBar(auth, userProfileViewModel)

@@ -11,6 +11,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
@@ -84,7 +85,7 @@ internal fun TransactingScreen(coinViewModel: CoinViewModel, userAccountViewMode
 
     val modifier = Modifier.padding(horizontal = 8.dp, vertical = 12.dp)
 
-    val selectedBuyWay = remember { mutableStateListOf(true, false, false) }
+    val selectedBuyWay = remember { mutableStateListOf(false, true, false) }
     val buyWayList = listOf("지정가", "시장가", "예약")
 
     val symbol = coinViewModel.coin?.info?.symbol ?: throw IllegalArgumentException("Failed load symbol")
@@ -99,12 +100,13 @@ internal fun TransactingScreen(coinViewModel: CoinViewModel, userAccountViewMode
                     .padding()
                     .padding(bottom = 12.dp)) {
                     for (i in selectedBuyWay.indices) {
-                        Row(Modifier.weight(1f)) {
+                        Row(Modifier.weight(1f), verticalAlignment = Alignment.CenterVertically) {
                             RadioButton(selected = selectedBuyWay[i], onClick = {
                                 for (j in selectedBuyWay.indices)
                                     selectedBuyWay[j] = false
                                 selectedBuyWay[i] = true
                             })
+                            Spacer(modifier = Modifier.size(2.dp))
                             Text(buyWayList[i], fontSize = 14.sp)
                         }
                     }
@@ -127,13 +129,20 @@ internal fun TransactingScreen(coinViewModel: CoinViewModel, userAccountViewMode
                     Text(textValue, fontSize = 13.sp, fontWeight = FontWeight.Bold, textAlign = TextAlign.End)
                 }
             }
-            if (selectedBuyWay[0]) BuyByFixedPriceView(coinViewModel, userAccountViewModel)
+            if (selectedBuyWay[0]) PreparingScreen()
             else if (selectedBuyWay[1]) ByMarketPriceView(coinViewModel, userAccountViewModel, selectedTap)
-            else if (selectedBuyWay[2]) BuyByReserveView(coinViewModel, userAccountViewModel)
+            else if (selectedBuyWay[2]) PreparingScreen()
         }
     }
     else {
-        // TODO( History view )
+        PreparingScreen()
+    }
+}
+
+@Composable
+fun PreparingScreen() {
+    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+        Text("준비 중입니다.")
     }
 }
 
@@ -151,9 +160,16 @@ internal fun ByMarketPriceView(coinViewModel: CoinViewModel, userAccountViewMode
     Column() {
 
         var input by remember { mutableStateOf("0") }
-        Row(verticalAlignment = Alignment.CenterVertically) {
+        Row(modifier = Modifier.height(26.dp),
+            verticalAlignment = Alignment.CenterVertically) {
 
-            Text(textInputGuide, fontSize = 14.sp)
+            Row(modifier = Modifier
+                .fillMaxHeight()
+                .padding(horizontal = 4.dp), verticalAlignment = Alignment.CenterVertically) {
+                Text(text = textInputGuide,
+                    fontSize = 14.sp,
+                    textAlign = TextAlign.Center)
+            }
             BasicTextField(value = input, onValueChange = { inputText ->
                 input =
                     if (tab == TransactionState.BUY) inputText.filter { it.isDigit() }
@@ -165,25 +181,32 @@ internal fun ByMarketPriceView(coinViewModel: CoinViewModel, userAccountViewMode
                     }
             }, singleLine = true, textStyle = LocalTextStyle.current.copy(
                 color = MaterialTheme.colors.onSurface,
-                fontSize = 14.sp
+                fontSize = 14.sp,
             ), keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                 modifier = Modifier
                     .weight(1f)
-                    .height(26.dp)
+                    .fillMaxHeight()
                     .align(Alignment.CenterVertically)
                     .clip(RoundedCornerShape(8.dp))
                     .background(MaterialTheme.colors.primaryVariant)
-                    .padding(horizontal = 6.dp))
+                    .padding(horizontal = 6.dp)
+                    .padding(top = 3.dp),
+            )
 
             var isExpanded by remember { mutableStateOf(false) }
             var currentRatio by remember { mutableStateOf("가능") }
             val ratioList = listOf("최대" to 1.0, "50%" to 0.5, "25%" to 0.25, "10%" to 0.1)
 
-            Column() {
+            Column(modifier = Modifier.fillMaxHeight()) {
 
-                Button(onClick = { isExpanded = !isExpanded }) {
-                    Text(currentRatio)
-
+                Button(onClick = { isExpanded = !isExpanded }, contentPadding = PaddingValues(0.dp), modifier = Modifier
+                    .fillMaxHeight()
+                    .padding(horizontal = 6.dp)) {
+                    Row(modifier = Modifier.fillMaxHeight(), verticalAlignment = Alignment.CenterVertically) {
+                        Text(currentRatio,
+                            fontSize = 12.sp,
+                            textAlign = TextAlign.Center)
+                    }
                 }
                 DropdownMenu(expanded = isExpanded, onDismissRequest = { isExpanded = false }) {
                     for (ratio in ratioList) {
@@ -208,8 +231,9 @@ internal fun ByMarketPriceView(coinViewModel: CoinViewModel, userAccountViewMode
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
             Text("수수료 : " + NumberFormat.coinRate(UserAccountRepository.FEE), fontSize = 8.sp)
         }
+        Spacer(Modifier.height(24.dp))
         Row(modifier = Modifier.fillMaxSize(),horizontalArrangement = Arrangement.SpaceAround) {
-            Button(modifier = Modifier.size(width = 80.dp, height = 40.dp),
+            Button(modifier = Modifier.size(width = 100.dp, height = 40.dp),
                 onClick = {      // Reset Button
                 input = "0"
             }) {
@@ -219,7 +243,9 @@ internal fun ByMarketPriceView(coinViewModel: CoinViewModel, userAccountViewMode
             /**
              *  Buy or Sell
              */
-            Button(modifier = Modifier.size(width = 80.dp, height = 40.dp),
+            Button(modifier = Modifier.size(width = 100.dp, height = 40.dp),
+                colors = ButtonDefaults.buttonColors(backgroundColor = if (tab == TransactionState.BUY) Color(
+                    0xFF28B417) else Color(0xFFAC2525)),
                 onClick = {
                 if (tab == TransactionState.BUY) {    // BUY
                     userAccountViewModel.buy(symbol = symbol,

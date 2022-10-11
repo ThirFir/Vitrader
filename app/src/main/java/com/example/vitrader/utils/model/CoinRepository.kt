@@ -14,6 +14,7 @@ object CoinRepository {
     val coins get() = _coins
 
     init {
+        Log.d("ddddddddd", "fffffffff")
         launchGettingExternalCoinData()
     }
 

@@ -1,9 +1,9 @@
 package com.example.vitrader
 
+import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import android.util.Log
-import android.util.Log.e
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.*
@@ -18,24 +18,25 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.ViewModelProvider
 import androidx.navigation.compose.rememberNavController
 import com.example.vitrader.navigation.BottomNavHost
 import com.example.vitrader.navigation.BottomNavigationView
-import com.example.vitrader.navigation.LoadingView
 import com.example.vitrader.screen.main.getMainScreens
-import com.example.vitrader.screen.stringToBitmap
+import com.example.vitrader.screen.transaction.HistoryManager
 import com.example.vitrader.theme.VitraderTheme
-import com.example.vitrader.utils.db.UpbitWebSocketListener
-import com.example.vitrader.utils.model.CoinRepository
+import com.example.vitrader.utils.db.HistoryDatabase
+import com.example.vitrader.utils.model.History
 import com.example.vitrader.utils.noRippleClickable
 import com.example.vitrader.utils.viewmodel.CoinListViewModel
 import com.example.vitrader.utils.viewmodel.UserAccountViewModel
 import com.example.vitrader.utils.viewmodel.UserProfileViewModel
 import com.google.firebase.auth.FirebaseAuth
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import androidx.compose.foundation.shape.CircleShape as CircleShape
 
 
@@ -49,6 +50,9 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
 
         initializeVariables()
+        CoroutineScope(Dispatchers.IO).launch {
+            HistoryManager.initializeHistories(this@MainActivity)
+        }
 
         setContent {
             VitraderTheme() {
@@ -100,7 +104,7 @@ fun WholeScreenScaffold(userAccountViewModel: UserAccountViewModel, userProfileV
         }
     ) {
         Box(modifier = Modifier.padding(bottom = it.calculateBottomPadding())) {
-            BottomNavHost(userAccountViewModel, coinListViewModel, navController)
+            BottomNavHost(userProfileViewModel, userAccountViewModel, coinListViewModel, navController)
         }
     }
 
@@ -118,31 +122,27 @@ fun MainTopAppBar(auth: FirebaseAuth, userProfileViewModel: UserProfileViewModel
                 .padding(horizontal = 18.dp)
                 .weight(1f),
             fontSize = 20.sp)
+
+        val imageModifier = Modifier
+            .padding(horizontal = 18.dp)
+            .size(32.dp)
+            .clip(CircleShape)
+            .noRippleClickable {
+                val intent = Intent(context, ProfileActivity::class.java).apply {
+                    putExtra("email", "")
+                }
+                context.startActivity(intent)
+            }
         if (userProfileViewModel.profileImg != null)
             Image(bitmap = userProfileViewModel.profileImg!!.asImageBitmap(),
                 contentDescription = "profile_img",
                 contentScale = ContentScale.Crop,
-                modifier = Modifier
-                    .padding(horizontal = 18.dp)
-                    .size(28.dp)
-                    .clip(CircleShape)
-                    .noRippleClickable {
-                        auth.currentUser?.email?.let { Log.d("TopBar", it) }
-                        context.startActivity(Intent(context, ProfileActivity::class.java))
-                    })
+                modifier = imageModifier)
         else
             Image(imageVector = Icons.Default.AccountCircle,
                 contentDescription = "profile_img",
                 contentScale = ContentScale.Crop,
-                modifier = Modifier
-                    .padding(horizontal = 18.dp)
-                    .size(28.dp)
-                    .clip(CircleShape)
-                    .noRippleClickable {
-                        auth.currentUser?.email?.let { Log.d("TopBar", it) }
-                        context.startActivity(Intent(context, ProfileActivity::class.java))
-                    })
+                modifier = imageModifier)
     }
 }
-
 

@@ -1,8 +1,13 @@
 package com.example.vitrader.screen.transaction
 
+import android.content.Context
+import android.os.Build
 import android.widget.Toast
+import androidx.annotation.RequiresApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardOptions
@@ -21,18 +26,27 @@ import androidx.compose.ui.unit.sp
 import com.example.vitrader.theme.Blue1600
 import com.example.vitrader.utils.NumberFormat
 import com.example.vitrader.utils.SymbolFormat
+import com.example.vitrader.utils.db.HistoryDatabase
+import com.example.vitrader.utils.model.History
 import com.example.vitrader.utils.model.UserAccountRepository
 import com.example.vitrader.utils.noRippleClickable
 import com.example.vitrader.utils.viewmodel.CoinViewModel
 import com.example.vitrader.utils.viewmodel.UserAccountViewModel
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.launch
 import java.lang.IllegalArgumentException
 import java.math.BigDecimal
+import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
 
 
 internal enum class TransactionState(val koreaName: String) {
     BUY("매수"), SELL("매도"), HISTORY("거래내역")
 }
 
+@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun TransactionScreen(coinViewModel: CoinViewModel, userAccountViewModel: UserAccountViewModel) {
     Surface(modifier = Modifier.fillMaxSize()) {
@@ -80,6 +94,7 @@ internal fun TransactingChangeTab(selected: TransactionState, onChanged: (Transa
     }
 }
 
+@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 internal fun TransactingScreen(coinViewModel: CoinViewModel, userAccountViewModel: UserAccountViewModel, selectedTap: TransactionState) {
 
@@ -134,8 +149,8 @@ internal fun TransactingScreen(coinViewModel: CoinViewModel, userAccountViewMode
             else if (selectedBuyWay[2]) PreparingScreen()
         }
     }
-    else {
-        PreparingScreen()
+    else {      // 거래내역
+        HistoryView(symbol)
     }
 }
 
@@ -146,6 +161,7 @@ fun PreparingScreen() {
     }
 }
 
+@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 internal fun ByMarketPriceView(coinViewModel: CoinViewModel, userAccountViewModel: UserAccountViewModel, tab: TransactionState) {
 
@@ -247,23 +263,32 @@ internal fun ByMarketPriceView(coinViewModel: CoinViewModel, userAccountViewMode
                 colors = ButtonDefaults.buttonColors(backgroundColor = if (tab == TransactionState.BUY) Color(
                     0xFF28B417) else Color(0xFFAC2525)),
                 onClick = {
-                if (tab == TransactionState.BUY) {    // BUY
-                    userAccountViewModel.buy(symbol = symbol,
-                        price = coinViewModel.coin?.ticker?.trade_price!!,
-                        count = if (input == "") 0.0 else BigDecimal(BigDecimal(input).setScale(8,
-                            BigDecimal.ROUND_HALF_UP)
-                            .toDouble() / coinViewModel.coin?.ticker?.trade_price!!).toDouble()) {
-                        Toast.makeText(context, it, Toast.LENGTH_SHORT).show()
-                    }
-                } else {          // SELL
-                    userAccountViewModel.sell(symbol = symbol,
-                        price = coinViewModel.coin?.ticker?.trade_price!!,
+                    val price = coinViewModel.coin?.ticker?.trade_price!!
+                    val transaction: String
+                    val count: Double
+                    if (tab == TransactionState.BUY) {    // BUY
+                        transaction = "BUY"
+                        count =
+                            if (input == "") 0.0 else BigDecimal(BigDecimal(input).setScale(8,
+                                BigDecimal.ROUND_HALF_UP)
+                                .toDouble() / coinViewModel.coin?.ticker?.trade_price!!).toDouble()
+                        userAccountViewModel.buy(symbol = symbol, price = price, count = count) {
+                            Toast.makeText(context, it, Toast.LENGTH_SHORT).show()
+                        }
+
+                    } else {          // SELL
+                        transaction = "SELL"
                         count = if (input == "") 0.0 else BigDecimal(input).setScale(8,
-                            BigDecimal.ROUND_HALF_UP).toDouble()) {
-                        Toast.makeText(context, it, Toast.LENGTH_SHORT).show()
+                            BigDecimal.ROUND_HALF_UP).toDouble()
+                        userAccountViewModel.sell(symbol = symbol, price = price, count = count) {
+                            Toast.makeText(context, it, Toast.LENGTH_SHORT).show()
+                        }
                     }
-                }
-            }) {
+                    /** Insert History */
+                    HistoryManager.apply {
+                        addHistory(makeHistory(symbol, price, count * (1 - UserAccountRepository.FEE), transaction), context)
+                    }
+                }) {
                 Text(if (tab == TransactionState.BUY) "매수" else "매도")
             }
         }
@@ -273,6 +298,93 @@ internal fun ByMarketPriceView(coinViewModel: CoinViewModel, userAccountViewMode
 
 
 @Composable
-fun HistoryView(modifier: Modifier) {
+fun HistoryView(symbol: String) {
 
+    val symbolHistories = HistoryManager.getSymbolHistories(symbol)
+
+    Column {
+        LazyColumn() {
+            items(symbolHistories) {
+                HistoryItem(it)
+            }
+        }
+    }
+}
+
+@Composable
+fun HistoryItem(history: History) {
+    val transactionText: String
+    val transactionColor: Color
+
+    if(history.transaction == "BUY") {
+        transactionText = "매수"
+        transactionColor = Color.Green
+    }
+    else{
+        transactionText = "매도"
+        transactionColor = Color.Red
+    }
+    Column(modifier = Modifier.padding(horizontal = 4.dp, vertical = 6.dp)) {
+        val data = listOf("시간" to history.date, "가격" to NumberFormat.coinPrice(history.price), "수량" to BigDecimal(history.count).setScale(8, BigDecimal.ROUND_HALF_UP).toPlainString(), "총액" to NumberFormat.krwFormat(history.price * history.count))
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Text(SymbolFormat.get(history.symbol), fontWeight = FontWeight.Bold, modifier = Modifier.weight(1f))
+            Text(transactionText, color = transactionColor, fontWeight = FontWeight.Bold)
+        }
+        Spacer(Modifier.height(2.dp))
+        Spacer(Modifier
+            .fillMaxWidth()
+            .height(3.dp)
+            .background(color = Color.Black)
+        )
+        Spacer(Modifier.height(4.dp))
+        for(d in data)
+            Row(verticalAlignment = Alignment.Bottom) {
+                Text(d.first, modifier = Modifier.weight(1f), fontSize = 14.sp)
+
+                val fontSize = if(d.second.length > 18) 12.sp else 14.sp
+                Text(d.second, fontSize = fontSize)
+            }
+    }
+}
+
+object HistoryManager {
+
+    private val _histories = mutableStateListOf<History>()
+    val histories get() = _histories
+
+    @RequiresApi(Build.VERSION_CODES.O)
+    fun makeHistory(symbol: String, price: Double, count: Double, transaction: String): History {
+        val date = LocalDateTime.now()
+        val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")
+        val formatted = date.format(formatter)
+        return History(symbol = symbol,
+            transaction = transaction,
+            price = price,
+            count = count,
+            date = formatted)
+    }
+
+    fun addHistory(history: History, context: Context) {
+        _histories.add(0, history)
+        CoroutineScope(Dispatchers.IO).launch {
+            HistoryDatabase.getDatabase(context)?.historyDao()?.insertHistory(history)
+        }
+    }
+
+    suspend fun initializeHistories(context: Context) {
+        val list = CoroutineScope(Dispatchers.IO).async {
+            HistoryDatabase.getDatabase(context)?.historyDao()?.getAllHistories() ?: listOf()
+        }.await()
+        _histories.addAll(list.reversed())
+    }
+
+    fun getSymbolHistories(symbol: String): List<History> {
+        val symbolHistories = mutableListOf<History>()
+
+        for(h in histories)
+            if(h.symbol == symbol)
+                symbolHistories.add(h)
+
+        return symbolHistories
+    }
 }

@@ -15,9 +15,13 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.example.vitrader.LoginActivity
 import com.example.vitrader.MainActivity
+import com.example.vitrader.utils.db.UserRemoteDataSource
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.ktx.auth
 import com.google.firebase.ktx.Firebase
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 
 @Composable
 fun LoginScreen(navController: NavController?) {
@@ -50,6 +54,9 @@ fun LoginScreen(navController: NavController?) {
 
 private fun tryAutoLogin(context: Context, auth: FirebaseAuth) {
     if(auth.currentUser != null) {
+        CoroutineScope(Dispatchers.IO).launch {
+            UserRemoteDataSource.createInitialCloudAndRealTimeData(auth.currentUser!!.email!!)
+        }
         context.startActivity(Intent(context, MainActivity::class.java))
         (context as LoginActivity).finish()
     }
@@ -63,6 +70,9 @@ private fun tryLogin(context: Context, email: String, password: String) {
     auth.signInWithEmailAndPassword(email, password)
         .addOnCompleteListener() {
             if (it.isSuccessful) {
+                CoroutineScope(Dispatchers.IO).launch {
+                    UserRemoteDataSource.createInitialCloudAndRealTimeData(auth.currentUser!!.email!!)
+                }
                 Log.d("LogIn", "로그인 성공")
                 context.startActivity(Intent(context, MainActivity::class.java))
                 (context as LoginActivity).finish()
@@ -71,6 +81,8 @@ private fun tryLogin(context: Context, email: String, password: String) {
             }
         }
 }
+
+
 
 @Composable
 internal fun LoginTextField(inputText: String, placeholder: String, isPassword: Boolean , onGettingInput: (String) -> Unit) {

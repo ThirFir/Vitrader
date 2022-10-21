@@ -7,9 +7,7 @@ import android.content.Context
 import android.content.Intent
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
-import android.graphics.Canvas
 import android.graphics.ImageDecoder
-import android.graphics.drawable.BitmapDrawable
 import android.net.Uri
 import android.os.Build
 import android.provider.MediaStore
@@ -17,46 +15,67 @@ import android.util.Base64
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material.Button
-import androidx.compose.material.Surface
-import androidx.compose.material.Text
+import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccountCircle
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.core.content.ContextCompat
-import com.example.vitrader.R
-import com.example.vitrader.utils.viewmodel.UserAccountViewModel
-import com.example.vitrader.utils.viewmodel.UserProfileViewModel
+import com.example.vitrader.screen.transaction.HistoryManager
+import com.example.vitrader.utils.NumberFormat
+import com.example.vitrader.utils.model.UserAccountData
+import com.example.vitrader.utils.model.UserProfileData
+import com.example.vitrader.utils.noRippleClickable
 import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.database.FirebaseDatabase
 import com.google.firebase.storage.FirebaseStorage
 import java.io.ByteArrayOutputStream
 
 @Composable
-fun ProfileScreen(userAccountViewModel: UserAccountViewModel, userProfileViewModel: UserProfileViewModel) {
+fun ProfileScreen(userAccount: UserAccountData, userProfile: UserProfileData) {
 
     val context = LocalContext.current
 
     val storage = FirebaseStorage.getInstance()
     val storageRef = storage.reference
 
+    Scaffold(
+        topBar = { ProfileTopAppBar() }
+    ) {
 
-    Surface(modifier = Modifier.fillMaxSize()){
-        Column(modifier = Modifier.fillMaxSize()) {
-            UserProfileView(userAccountViewModel, userProfileViewModel)
+        Surface(modifier = Modifier.fillMaxSize()) {
+            Column(modifier = Modifier.fillMaxSize()) {
+                UserProfileView(userAccount, userProfile)
+            }
         }
     }
+}
 
+@Composable
+fun ProfileTopAppBar() {
+    TopAppBar(modifier = Modifier.background(color = Color(0xff1A1B2F))) {
+        Text("Vitrader",
+            modifier = Modifier
+                .padding(horizontal = 18.dp)
+                .weight(1f),
+            fontSize = 20.sp)
+        IconButton(onClick = { /*TODO*/ }) {
+            Icon(imageVector = Icons.Default.Edit, contentDescription = "Edit Nickname", tint = Color.LightGray)
+        }
+    }
 }
 
 @Suppress("DEPRECATION", "NewApi")
@@ -73,18 +92,18 @@ private fun Uri.parseBitmap(context: Context): Bitmap {
 }
 
 @Composable
-fun UserProfileView(userAccountViewModel: UserAccountViewModel, userProfileViewModel: UserProfileViewModel) {
+fun UserProfileView(userAccount: UserAccountData, userProfile: UserProfileData) {
 
     val context = LocalContext.current
     val auth = FirebaseAuth.getInstance()
-    var profileBitmap by remember { mutableStateOf(userProfileViewModel.profileImg) }
+    var profileBitmap by remember { mutableStateOf(userProfile.profileImg) }
 
 
     val galleryLauncher = rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) {
         if(it.resultCode == Activity.RESULT_OK) {
             it.data?.data?.let { uri ->
                 profileBitmap = uri.parseBitmap(context)
-                userProfileViewModel.setProfileImg(profileBitmap)
+                //userProfileViewModel.setProfileImg(profileBitmap)
             }
         }
     }
@@ -100,21 +119,55 @@ fun UserProfileView(userAccountViewModel: UserAccountViewModel, userProfileViewM
         putExtra(Intent.EXTRA_ALLOW_MULTIPLE, false)
     }
 
-    Box(modifier = Modifier.fillMaxWidth()) {
-        Row(modifier = Modifier.fillMaxWidth()) {
-            Text(userProfileViewModel.nickname, fontSize = 24.sp, fontWeight = FontWeight.Bold)
-            Column() {
-                if (profileBitmap != null)
-                    Image(bitmap = profileBitmap!!.asImageBitmap(),
-                        contentScale = ContentScale.Crop,
-                        contentDescription = "profile_img",
-                        modifier = Modifier
-                            .size(48.dp)
-                            .clip(CircleShape))
-                Button(onClick = {
-                    galleryLauncher.launch(intent)
-                }) {
-                    Text("수정")
+    Column(modifier = Modifier
+        .fillMaxWidth()
+        .padding(18.dp)) {
+        Column(modifier = Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
+            if (userProfile.profileImg != null)
+                Image(bitmap = userProfile.profileImg!!.asImageBitmap(),
+                    contentScale = ContentScale.Crop,
+                    contentDescription = "profile_img",
+                    modifier = Modifier
+                        .size(96.dp)
+                        .clip(CircleShape)
+                        .noRippleClickable {
+                            galleryLauncher.launch(intent)
+                        })
+            else
+                Image(imageVector = Icons.Default.AccountCircle,
+                    contentScale = ContentScale.Crop,
+                    contentDescription = "profile_img",
+                    modifier = Modifier
+                        .size(96.dp)
+                        .clip(CircleShape)
+                        .noRippleClickable {
+                            galleryLauncher.launch(intent)
+                        })
+
+            Text(userProfile.nickname, fontSize = 24.sp, fontWeight = FontWeight.Bold, modifier = Modifier
+                .padding()
+                .padding(vertical = 20.dp))
+            Text("Profile DescriptionProfile DescriptionProfile DescriptionProfile DescriptionProfile Description", fontSize = 14.sp, maxLines = 3, modifier = Modifier.width(250.dp).height(60.dp))
+        }
+        Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 40.dp)) {
+            Row(modifier = Modifier.fillMaxWidth()) {
+                Text("보유 KRW", modifier = Modifier.weight(1f), fontWeight = FontWeight.Bold)
+                Text(NumberFormat.krwFormat(userAccount.krw), fontWeight = FontWeight.Bold)
+            }
+            Row(modifier = Modifier.fillMaxWidth()) {
+                Text("랭킹", modifier = Modifier.weight(1f), fontWeight = FontWeight.Bold)
+                Text("\$위", fontWeight = FontWeight.Bold)
+            }
+            Row(modifier = Modifier.fillMaxWidth()) {
+                Text("보유 중", modifier = Modifier.weight(1f), fontWeight = FontWeight.Bold)
+            }
+        }
+
+        Spacer(Modifier.height(30.dp))
+        LazyColumn(modifier = Modifier.fillMaxWidth()) {
+            items(HistoryManager.histories) {
+                Column(modifier = Modifier.padding(horizontal = 20.dp)) {
+                    // HistoryItem(it)
                 }
             }
         }

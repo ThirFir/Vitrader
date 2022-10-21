@@ -70,12 +70,12 @@ fun HottestCoinView(hottestCoin : Coin, onClicked : (String) -> Unit) {
                         modifier = Modifier.heightIn(17.dp))
                     Spacer(modifier = Modifier.size(30.dp))
 
-                    Row(verticalAlignment = Alignment.Bottom) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
                         Text(text = "₩ " + NumberFormat.coinPrice(hottestCoin.ticker.trade_price),
                             fontWeight = FontWeight.Bold,
                             fontSize = 22.sp,
                             modifier = Modifier.heightIn(22.dp))
-                        Spacer(Modifier.size(10.dp))
+                        Spacer(Modifier.size(12.dp))
                         Text(text = NumberFormat.coinPrice(hottestCoin.ticker.signed_change_price),
                             fontWeight = FontWeight.Bold,
                             fontSize = 18.sp,

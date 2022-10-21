@@ -1,5 +1,7 @@
 package com.example.vitrader.utils.viewmodel
 
+import android.os.Build
+import androidx.annotation.RequiresApi
 import androidx.lifecycle.ViewModel
 import com.example.vitrader.utils.model.UserAccountRepository
 import java.math.BigDecimal
@@ -18,18 +20,19 @@ class UserAccountViewModel : ViewModel() {
     val bookmark get() = userAccountData.value.bookmark
 
 
-
+    /** returns user average buy price of symbol(coin) */
     fun getAverage(symbol: String) : BigDecimal {
         val keyIterator = possessingCoins[symbol]?.keys?.iterator()
         var averagePrice = 0.0
         if(keyIterator?.hasNext() == true)
             averagePrice = keyIterator.next().toDouble()
-        return BigDecimal(averagePrice).setScale(8, BigDecimal.ROUND_HALF_UP)
+        return BigDecimal(averagePrice).setScale(4, BigDecimal.ROUND_HALF_UP)
     }
     fun isSymbolNull(symbol: String): Boolean = userAccountData.value.possessingCoins[symbol] == null
     fun getCoinCount(symbol: String): BigDecimal =
         BigDecimal(userAccountData.value.possessingCoins[symbol]?.values?.sum() ?: 0.0).setScale(8, BigDecimal.ROUND_HALF_UP)
 
+    @RequiresApi(Build.VERSION_CODES.O)
     fun buy(symbol: String, price: Double, count: Double, onMessage: (String) -> Unit) {
 
         val toastMessage = if(userAccountData.value.krw >= (price * count).toLong()) {

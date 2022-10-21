@@ -1,11 +1,16 @@
 package com.example.vitrader.utils.model
 
+import android.os.Build
+import android.util.Log
+import androidx.annotation.RequiresApi
 import androidx.compose.runtime.mutableStateOf
 import com.example.vitrader.utils.db.UserRemoteDataSource
 import com.example.vitrader.utils.dbDoubleFormat
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
 import kotlin.math.roundToLong
 
 object UserAccountRepository {
@@ -31,6 +36,7 @@ object UserAccountRepository {
         _userAccountData.value = newUserAccountData
     }
 
+    @RequiresApi(Build.VERSION_CODES.O)
     fun buy(symbol: String, price: Double, count: Double) {
 
         val chargedCount = count * (1 - FEE)        // 수수료 부과된 개수
@@ -71,10 +77,10 @@ object UserAccountRepository {
         update(newUserData)
     }
 
+    @RequiresApi(Build.VERSION_CODES.O)
     fun sell(symbol: String, price: Double, count: Double) {
 
         val newUserData = userAccountData.value.copy()
-
 
         val keyIterator = newUserData.possessingCoins[symbol]?.keys?.iterator()
         if(keyIterator?.hasNext() == true) {
@@ -96,7 +102,9 @@ object UserAccountRepository {
     private fun update(newUserAccountData: UserAccountData = this._userAccountData.value) {
         setUserData(newUserAccountData)
         userRemoteDataSource.updateAccount(newUserAccountData)
+
     }
+
 
     fun addBookmark(symbol: String) {
         _userAccountData.value.bookmark.add(symbol)
@@ -106,4 +114,5 @@ object UserAccountRepository {
         _userAccountData.value.bookmark.remove(symbol)
         userRemoteDataSource.updateBookmark(_userAccountData.value.bookmark)
     }
+
 }

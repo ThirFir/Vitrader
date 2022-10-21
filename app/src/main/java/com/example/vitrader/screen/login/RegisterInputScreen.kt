@@ -17,6 +17,9 @@ import com.google.firebase.auth.ktx.auth
 import com.google.firebase.database.FirebaseDatabase
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.ktx.Firebase
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 
 @Composable
 fun RegisterInputScreen(navController: NavController?) {
@@ -65,8 +68,9 @@ private fun registerUser(
                     ?.addOnCompleteListener { sendTask ->
                         if (sendTask.isSuccessful) {
 
-                            UserRemoteDataSource.createInitialAccountData(auth.currentUser!!.email!!)
-                            UserRemoteDataSource.createInitialRankData(auth.currentUser!!.email!!)
+                            CoroutineScope(Dispatchers.IO).launch {
+                                UserRemoteDataSource.createInitialCloudAndRealTimeData(auth.currentUser!!.email!!)
+                            }
 
                             navController?.popBackStack()
                             navController?.navigate(LoginScreenDestination.LOGIN.route)

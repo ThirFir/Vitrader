@@ -1,5 +1,6 @@
 package com.example.vitrader.screen.main
 
+import android.content.Intent
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.util.Log
@@ -8,6 +9,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material.Icon
 import androidx.compose.material.Text
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccountCircle
@@ -18,25 +20,30 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
+import com.example.vitrader.ProfileActivity
 import com.example.vitrader.R
 import com.example.vitrader.utils.NumberFormat
 import com.example.vitrader.utils.db.UserRemoteDataSource
+import com.example.vitrader.utils.noRippleClickable
+import com.example.vitrader.utils.viewmodel.UserProfileViewModel
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.DataSnapshot
 import com.google.firebase.database.DatabaseError
 import com.google.firebase.database.FirebaseDatabase
 import com.google.firebase.database.ValueEventListener
+import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.storage.FirebaseStorage
 import kotlinx.coroutines.tasks.await
 
 @Composable
-fun RankingScreen() {
+fun RankingScreen(userProfileViewModel: UserProfileViewModel) {
 
     val ranking = remember { mutableStateListOf<DataSnapshot>() }
 
@@ -59,14 +66,18 @@ fun RankingScreen() {
 
     LazyColumn{
         itemsIndexed(ranking.sortedByDescending { it.value as Long }) { rank, item ->
-            RankProfile(rank + 1, item)
+            RankProfile(rank + 1, item, userProfileViewModel)
         }
     }
 
 }
 
 @Composable
-fun RankProfile(rank: Int, item: DataSnapshot) {
+fun RankProfile(rank: Int, item: DataSnapshot, userProfileViewModel: UserProfileViewModel) {
+
+    val context = LocalContext.current
+
+    val nickname by remember { mutableStateOf("") }
 
     val storage = FirebaseStorage.getInstance()
     val storageRef = storage.reference.child(item.key!!)
@@ -85,7 +96,13 @@ fun RankProfile(rank: Int, item: DataSnapshot) {
 
     Row(modifier = Modifier
         .fillMaxWidth()
-        .padding(vertical = 12.dp, horizontal = 8.dp),
+        .padding(vertical = 12.dp, horizontal = 8.dp)
+        .noRippleClickable {
+            val intent = Intent(context, ProfileActivity::class.java).apply {
+                putExtra("email", item.key)
+            }
+            context.startActivity(intent)
+        },
         verticalAlignment = Alignment.CenterVertically) {
         Row(modifier = Modifier
             .fillMaxHeight()
@@ -111,9 +128,10 @@ fun RankProfile(rank: Int, item: DataSnapshot) {
                 textAlign = TextAlign.Center
                )
 
+
+
             if (bitmap == null)
-                Image(imageVector = Icons.Default.AccountCircle,
-                    contentScale = ContentScale.Crop,
+                Icon(imageVector = Icons.Default.AccountCircle,
                     contentDescription = "profile_img",
                     modifier = Modifier
                         .padding(end = 12.dp)
@@ -129,8 +147,10 @@ fun RankProfile(rank: Int, item: DataSnapshot) {
                         .clip(
                             CircleShape)
                         .size(40.dp))
-            Text(item.key.toString())
+            Text(item.key.toString(), color = Color.White, maxLines = 1, modifier = Modifier.weight(1f), fontSize = 13.5.sp)
+
         }
-        Text(NumberFormat.krwFormat(item.value as Long) + " KRW")
+
+        Text(NumberFormat.krwFormat(item.value as Long) + " KRW", color = Color.White, maxLines = 1, modifier = Modifier.width(150.dp), fontSize = 13.5.sp, textAlign = TextAlign.End)
     }
 }

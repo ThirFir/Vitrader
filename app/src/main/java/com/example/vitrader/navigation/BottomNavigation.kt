@@ -26,6 +26,7 @@ import com.example.vitrader.theme.Blue2000
 import com.example.vitrader.utils.db.UpbitWebSocketListener
 import com.example.vitrader.utils.viewmodel.CoinListViewModel
 import com.example.vitrader.utils.viewmodel.UserAccountViewModel
+import com.example.vitrader.utils.viewmodel.UserProfileViewModel
 
 fun moveToTransactionActivity(context: Context, symbol: String) {
     val intent = Intent(context, TransactionActivity::class.java)
@@ -38,7 +39,7 @@ fun moveToTransactionActivity(context: Context, symbol: String) {
 }
 
 @Composable
-fun BottomNavHost(userAccountViewModel: UserAccountViewModel, coinListViewModel: CoinListViewModel, navController: NavHostController) {
+fun BottomNavHost(userProfileViewModel: UserProfileViewModel, userAccountViewModel: UserAccountViewModel, coinListViewModel: CoinListViewModel, navController: NavHostController) {
 
     val context = LocalContext.current
 
@@ -57,7 +58,7 @@ fun BottomNavHost(userAccountViewModel: UserAccountViewModel, coinListViewModel:
             CoinListScreen(coinListViewModel, userAccountViewModel) { onCoinClicked(it) }
         }
         composable(MainScreenDestination.RANKING.route) {
-            RankingScreen()
+            RankingScreen(userProfileViewModel)
         }
         composable(MainScreenDestination.PROFILE.route) {
             ProfileScreen(userAccountViewModel, coinListViewModel)

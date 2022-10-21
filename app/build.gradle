@@ -96,4 +96,9 @@ dependencies {
     implementation 'com.github.PhilJay:MPAndroidChart:v3.1.0'
 
     implementation("io.coil-kt:coil-compose:2.0.0-rc01")
+
+
+    apply plugin: 'kotlin-kapt'
+    implementation "androidx.room:room-runtime:2.4.3"
+    kapt "androidx.room:room-compiler:2.4.3"
 }

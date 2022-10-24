@@ -12,6 +12,7 @@ import android.net.Uri
 import android.os.Build
 import android.provider.MediaStore
 import android.util.Base64
+import android.util.Log
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
@@ -98,7 +99,6 @@ fun UserProfileView(userAccount: UserAccountData, userProfile: UserProfileData) 
     val auth = FirebaseAuth.getInstance()
     var profileBitmap by remember { mutableStateOf(userProfile.profileImg) }
 
-
     val galleryLauncher = rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) {
         if(it.resultCode == Activity.RESULT_OK) {
             it.data?.data?.let { uri ->
@@ -172,23 +172,4 @@ fun UserProfileView(userAccount: UserAccountData, userProfile: UserProfileData) 
             }
         }
     }
-}
-
-fun bitmapToString(bitmap: Bitmap): String {
-
-    val byteArrayOutputStream = ByteArrayOutputStream()
-
-    bitmap.compress(Bitmap.CompressFormat.PNG, 100, byteArrayOutputStream)
-
-    val byteArray = byteArrayOutputStream.toByteArray()
-
-    return Base64.encodeToString(byteArray, Base64.DEFAULT)
-}
-
-@SuppressLint("UseCompatLoadingForDrawables")
-fun stringToBitmap(encodedString: String): Bitmap {
-
-    val encodeByte = Base64.decode(encodedString, Base64.DEFAULT)
-
-    return BitmapFactory.decodeByteArray(encodeByte, 0, encodeByte.size)
 }

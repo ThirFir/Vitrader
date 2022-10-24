@@ -129,7 +129,6 @@ fun RankProfile(rank: Int, item: DataSnapshot, userProfileViewModel: UserProfile
                )
 
 
-
             if (bitmap == null)
                 Icon(imageVector = Icons.Default.AccountCircle,
                     contentDescription = "profile_img",

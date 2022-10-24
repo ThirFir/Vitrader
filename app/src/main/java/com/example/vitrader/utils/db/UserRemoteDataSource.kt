@@ -5,19 +5,21 @@ import android.graphics.BitmapFactory
 import android.util.Log
 import com.example.vitrader.utils.model.UserAccountData
 import com.example.vitrader.utils.model.UserProfileData
+import com.example.vitrader.utils.model.UserProfileRepository.userProfileData
+import com.google.firebase.FirebaseException
 import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.database.DataSnapshot
 import com.google.firebase.database.FirebaseDatabase
-import com.google.firebase.firestore.DocumentChange
 import com.google.firebase.firestore.DocumentSnapshot
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.storage.FirebaseStorage
+import com.google.firebase.storage.StorageException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
 import java.io.ByteArrayOutputStream
+import java.lang.reflect.InvocationTargetException
 
 object UserRemoteDataSource {
 
@@ -28,6 +30,7 @@ object UserRemoteDataSource {
     private val realTimeDBRef = realTimeDB.getReference("krw")
 
     private const val initialKRW = 100000000L
+    private const val TAG = "UserRemoteDataSource"
 
     private fun getFileNameFormat(email: String): String = email.replace(".", "_")
     private fun getEmailFormat(file: String): String = file.replace("_", ".")
@@ -60,13 +63,9 @@ object UserRemoteDataSource {
         }.await()
 
         if(realTimeDoc.value == null) {
-            Log.d("realTimeDoc", "if")
             realTimeDBRef.child(emailTrans).setValue(initialKRW)
         }
-        else{
-            Log.d("realTimeDoc", "else : ${realTimeDoc.value}")
 
-        }
     }
 
     /** Document from Firebase Cloud.
@@ -76,7 +75,9 @@ object UserRemoteDataSource {
     private suspend fun getDocument(email: String = userDocumentPath): DocumentSnapshot? {
         val db = FirebaseFirestore.getInstance()
         return CoroutineScope(Dispatchers.IO).async {
-            db.collection(rootCollectionPath).document(getEmailFormat(email)).get().await()
+            db.collection(rootCollectionPath).document(getEmailFormat(email)).get().addOnFailureListener{
+
+            }.await()
         }.await()
     }
 
@@ -85,34 +86,36 @@ object UserRemoteDataSource {
         val userAccountData: UserAccountData?
 
         val doc = getDocument(email)!!
-        userAccountData = doc.toObject(UserAccountData::class.java) ?: throw Exception("User Database calling exception - failed load data $email")
+        userAccountData = doc.toObject(UserAccountData::class.java) ?: throw FirebaseException("User Database calling exception - failed load data $email")
         return userAccountData
     }
 
     suspend fun getUserProfileData(email: String = userDocumentPath) : UserProfileData {
 
-        val bitmap = getProfileImage()
-
-        val db = FirebaseFirestore.getInstance()
         val userProfileData: UserProfileData?
-
         val doc = getDocument(email)!!
-        userProfileData = doc.toObject(UserProfileData::class.java) ?: throw Exception("User Database calling exception - failed load data")
-        userProfileData.profileImg = bitmap
+        userProfileData = doc.toObject(UserProfileData::class.java) ?: throw FirebaseException("User Database calling exception - failed load data $email")
+
+        try {
+            Log.d(TAG + "getUserProfileData", "try")
+            userProfileData.profileImg = loadProfileImage(email)
+        }
+        catch (e: StorageException) {
+            Log.d(TAG + "getUserProfileData", "catch ${userProfileData.profileImg.toString()}")
+            e.printStackTrace()
+            return userProfileData
+        }
 
         return userProfileData
     }
 
-    suspend fun getProfileImage(email: String = userDocumentPath): Bitmap? {
+    private suspend fun loadProfileImage(email: String = userDocumentPath): Bitmap {
         val storage = FirebaseStorage.getInstance()
         val storageRef = storage.reference.child(getFileNameFormat(email))
 
-        val byteArray = storageRef.getBytes(100000000).addOnCompleteListener {
-            if(it.isSuccessful) {
+        val byteArray = storageRef.getBytes(100000000).await()
 
-            }
-        }.await()
-
+        Log.d("$TAG loadProfileImage", "$email : Success")
         return BitmapFactory.decodeByteArray(byteArray, 0, byteArray.size)
     }
 

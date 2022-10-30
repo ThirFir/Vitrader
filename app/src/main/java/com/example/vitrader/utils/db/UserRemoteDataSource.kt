@@ -2,159 +2,170 @@ package com.example.vitrader.utils.db
 
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
+import android.provider.SyncStateContract.Helpers.update
 import android.util.Log
 import com.example.vitrader.utils.model.UserAccountData
 import com.example.vitrader.utils.model.UserProfileData
-import com.example.vitrader.utils.model.UserProfileRepository.userProfileData
-import com.google.firebase.FirebaseException
 import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.database.FirebaseDatabase
 import com.google.firebase.firestore.DocumentSnapshot
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.FirebaseFirestoreException
 import com.google.firebase.storage.FirebaseStorage
 import com.google.firebase.storage.StorageException
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.async
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.*
 import kotlinx.coroutines.tasks.await
 import java.io.ByteArrayOutputStream
-import java.lang.reflect.InvocationTargetException
 
 object UserRemoteDataSource {
 
-    private const val rootCollectionPath = "users"
-    private val auth = FirebaseAuth.getInstance()
-    private val userDocumentPath = auth.currentUser?.email.toString()
-    private val realTimeDB = FirebaseDatabase.getInstance("https://vitrader-a8d28-default-rtdb.asia-southeast1.firebasedatabase.app")
-    private val realTimeDBRef = realTimeDB.getReference("krw")
-
-    private const val initialKRW = 100000000L
+    private const val accountCollection = "account"
+    private const val profileCollection = "profile"
     private const val TAG = "UserRemoteDataSource"
 
-    private fun getFileNameFormat(email: String): String = email.replace(".", "_")
-    private fun getEmailFormat(file: String): String = file.replace("_", ".")
+    private val auth = FirebaseAuth.getInstance()
+    private val myUid = auth.currentUser?.uid!!
 
-    suspend fun createInitialCloudAndRealTimeData(email: String) {
-        createInitialAccountData(email)
-        createInitialRankData(email)
+    private val db get() = FirebaseFirestore.getInstance()
+
+    private const val initialKRW = 100000000L
+
+
+    suspend fun createInitialCloudAndRealTimeData(uid: String, nickname: String) {
+        createInitialAccountData(uid)
+        createInitialProfileData(uid, nickname)
+        delay(2000)
     }
 
-    private suspend fun createInitialAccountData(email: String) {
-        val db = FirebaseFirestore.getInstance()
-
+    private suspend fun createInitialAccountData(uid: String) {
         val fields = hashMapOf(
             "krw" to initialKRW,
             "possessingCoins" to mutableMapOf<String, MutableMap<String, Double>>(),
             "totalBuy" to 0L,
-            "bookmark" to mutableListOf<String>(),
-            "nickname" to email.split("@")[0]
         )
 
-        val doc = getDocument(email)    // Coroutine
-        if(doc == null)
-            db.collection(rootCollectionPath).document(email).set(fields)
-
+        /* if account document of uid does not exist,
+           Create new account document. */
+        if(!getAccountDocument(uid).exists()) {
+            Log.d(TAG, "create account document $uid")
+            db.collection(accountCollection).document(uid).set(fields)
+        }
     }
-    private suspend fun createInitialRankData(email: String) {
-        val emailTrans = getFileNameFormat(email)
-        val realTimeDoc = CoroutineScope(Dispatchers.IO).async {
-            realTimeDBRef.child(emailTrans).get().await()
+
+    private suspend fun createInitialProfileData(uid: String, nickname: String) {
+        val fields = hashMapOf(
+            "nickname" to nickname,
+            "bookmark" to mutableListOf<String>()
+        )
+
+        /* if profile document of uid does not exist,
+           Create new account document. */
+        if(!getProfileDocument(uid).exists()) {
+            Log.d(TAG, "create profile document $uid")
+            db.collection(profileCollection).document(uid).set(fields)
+        }
+    }
+
+    /** Account document from Firebase Cloud.
+     *
+     *  path : account -> $uid
+     *  */
+    private suspend fun getAccountDocument(uid: String): DocumentSnapshot =
+        CoroutineScope(Dispatchers.IO).async {
+            db.collection(accountCollection).document(uid).get().await()
         }.await()
 
-        if(realTimeDoc.value == null) {
-            realTimeDBRef.child(emailTrans).setValue(initialKRW)
+    /** Profile document from Firebase Cloud.
+     *
+     *  path : profile -> $uid
+     *  */
+    private suspend fun getProfileDocument(uid: String): DocumentSnapshot =
+        CoroutineScope(Dispatchers.IO).async {
+            db.collection(profileCollection).document(uid).get().await()
+        }.await()
+
+
+    suspend fun getUserAccountData(uid: String = myUid) : UserAccountData {
+
+        // Firestore
+        val userAccountData = try {
+            getAccountDocument(uid).toObject(UserAccountData::class.java)
+        }
+        catch(e: FirebaseFirestoreException){
+            return UserAccountData()
         }
 
+        return userAccountData!!
     }
 
-    /** Document from Firebase Cloud.
-     *
-     *  path : users -> $email
-     *  */
-    private suspend fun getDocument(email: String = userDocumentPath): DocumentSnapshot? {
-        val db = FirebaseFirestore.getInstance()
-        return CoroutineScope(Dispatchers.IO).async {
-            db.collection(rootCollectionPath).document(getEmailFormat(email)).get().addOnFailureListener{
+    suspend fun getUserProfileData(uid: String = myUid) : UserProfileData {
 
-            }.await()
-        }.await()
-    }
+        // Firestore
+        val userProfileData = try {
+            getProfileDocument(uid).toObject(UserProfileData::class.java)
+        }
+        catch(e: FirebaseFirestoreException){
+            return UserProfileData()
+        }
 
-    suspend fun getUserAccountData(email: String = userDocumentPath) : UserAccountData {
-        val db = FirebaseFirestore.getInstance()
-        val userAccountData: UserAccountData?
-
-        val doc = getDocument(email)!!
-        userAccountData = doc.toObject(UserAccountData::class.java) ?: throw FirebaseException("User Database calling exception - failed load data $email")
-        return userAccountData
-    }
-
-    suspend fun getUserProfileData(email: String = userDocumentPath) : UserProfileData {
-
-        val userProfileData: UserProfileData?
-        val doc = getDocument(email)!!
-        userProfileData = doc.toObject(UserProfileData::class.java) ?: throw FirebaseException("User Database calling exception - failed load data $email")
-
+        // Firebase storage
         try {
-            Log.d(TAG + "getUserProfileData", "try")
-            userProfileData.profileImg = loadProfileImage(email)
+            userProfileData!!.profileImg = loadProfileImage(uid)
         }
         catch (e: StorageException) {
-            Log.d(TAG + "getUserProfileData", "catch ${userProfileData.profileImg.toString()}")
-            e.printStackTrace()
-            return userProfileData
+            // e.printStackTrace()
+            return userProfileData!!
         }
 
         return userProfileData
     }
 
-    private suspend fun loadProfileImage(email: String = userDocumentPath): Bitmap {
+    /** Get user profile image from Firebase storage. */
+    private suspend fun loadProfileImage(uid: String): Bitmap {
         val storage = FirebaseStorage.getInstance()
-        val storageRef = storage.reference.child(getFileNameFormat(email))
+        val storageRef = storage.reference.child(uid)
 
-        val byteArray = storageRef.getBytes(100000000).await()
+        val byteArray = storageRef.getBytes(100000000).addOnSuccessListener {
+            Log.d(TAG, "loadProfileImage : load success - uid : $uid")
+        }.await()
 
-        Log.d("$TAG loadProfileImage", "$email : Success")
         return BitmapFactory.decodeByteArray(byteArray, 0, byteArray.size)
     }
 
-    fun updateBookmark(bookmarkList: List<String>) {
-        CoroutineScope(Dispatchers.Default).launch {
-            val db = FirebaseFirestore.getInstance()
-            db.collection(rootCollectionPath).document(userDocumentPath)
-                .update("bookmark", bookmarkList)
-        }
-    }
 
     fun updateAccount(userAccountData: UserAccountData) {
-        CoroutineScope(Dispatchers.Default).launch {
-            val db = FirebaseFirestore.getInstance()
-            db.collection(rootCollectionPath).document(userDocumentPath)
+        CoroutineScope(Dispatchers.IO).launch {
+            db.collection(accountCollection).document(myUid)
                 .apply {
                     update("krw", userAccountData.krw)
                     update("possessingCoins", userAccountData.possessingCoins)
                     update("totalBuy", userAccountData.totalBuy)
-                    update("bookmark", userAccountData.bookmark)
                 }
-            realTimeDBRef.child(getFileNameFormat(userDocumentPath)).setValue(userAccountData.krw)
         }
     }
 
-    fun updateProfile(userProfileData: UserProfileData) {
-        CoroutineScope(Dispatchers.Default).launch {
+    fun updateProfileImage(bitmap: Bitmap) {
+        CoroutineScope(Dispatchers.IO).launch {
             val storage = FirebaseStorage.getInstance()
-            val storageRef = storage.reference.child(auth.currentUser?.email!!.split("@")[0])
+            val storageProfileImgRef = storage.getReference(myUid)
 
             val baos = ByteArrayOutputStream()
-            if(userProfileData.profileImg != null)
-                userProfileData.profileImg!!.compress(Bitmap.CompressFormat.JPEG, 100, baos)
+            bitmap.compress(Bitmap.CompressFormat.JPEG, 100, baos)
             val data = baos.toByteArray()
-            storageRef.putBytes(data).addOnCompleteListener{
-                if(it.isSuccessful) {
-
-                }
+            CoroutineScope(Dispatchers.IO).launch {
+                storageProfileImgRef.putBytes(data)
             }
+        }
+    }
+    fun updateNickname(nickname: String) {
+        CoroutineScope(Dispatchers.IO).launch {
+            db.collection(profileCollection).document(myUid)
+                .update("nickname", nickname)
+        }
+    }
+    fun updateBookmark(bookmarkList: List<String>) {
+        CoroutineScope(Dispatchers.IO).launch {
+            db.collection(profileCollection).document(myUid)
+                .update("bookmark", bookmarkList)
         }
     }
 

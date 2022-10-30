@@ -1,18 +1,14 @@
 package com.example.vitrader.screen
 
 
-import android.annotation.SuppressLint
 import android.app.Activity
 import android.content.Context
 import android.content.Intent
 import android.graphics.Bitmap
-import android.graphics.BitmapFactory
 import android.graphics.ImageDecoder
 import android.net.Uri
 import android.os.Build
 import android.provider.MediaStore
-import android.util.Base64
-import android.util.Log
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
@@ -36,17 +32,18 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.vitrader.screen.transaction.HistoryManager
+import com.example.vitrader.utils.ActivityManager
+import com.example.vitrader.utils.HistoryManager
 import com.example.vitrader.utils.NumberFormat
 import com.example.vitrader.utils.model.UserAccountData
 import com.example.vitrader.utils.model.UserProfileData
 import com.example.vitrader.utils.noRippleClickable
+import com.example.vitrader.utils.viewmodel.UserProfileViewModel
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.storage.FirebaseStorage
-import java.io.ByteArrayOutputStream
 
 @Composable
-fun ProfileScreen(userAccount: UserAccountData, userProfile: UserProfileData) {
+fun ProfileScreen(userAccount: UserAccountData, userProfile: UserProfileData, userProfileViewModel: UserProfileViewModel) {
 
     val context = LocalContext.current
 
@@ -59,7 +56,7 @@ fun ProfileScreen(userAccount: UserAccountData, userProfile: UserProfileData) {
 
         Surface(modifier = Modifier.fillMaxSize()) {
             Column(modifier = Modifier.fillMaxSize()) {
-                UserProfileView(userAccount, userProfile)
+                UserProfileView(userAccount, userProfile, userProfileViewModel)
             }
         }
     }
@@ -93,7 +90,7 @@ private fun Uri.parseBitmap(context: Context): Bitmap {
 }
 
 @Composable
-fun UserProfileView(userAccount: UserAccountData, userProfile: UserProfileData) {
+fun UserProfileView(userAccount: UserAccountData, userProfile: UserProfileData, userProfileViewModel: UserProfileViewModel) {
 
     val context = LocalContext.current
     val auth = FirebaseAuth.getInstance()
@@ -103,7 +100,7 @@ fun UserProfileView(userAccount: UserAccountData, userProfile: UserProfileData) 
         if(it.resultCode == Activity.RESULT_OK) {
             it.data?.data?.let { uri ->
                 profileBitmap = uri.parseBitmap(context)
-                //userProfileViewModel.setProfileImg(profileBitmap)
+                userProfileViewModel.updateProfileImage(profileBitmap)
             }
         }
     }
@@ -123,8 +120,8 @@ fun UserProfileView(userAccount: UserAccountData, userProfile: UserProfileData) 
         .fillMaxWidth()
         .padding(18.dp)) {
         Column(modifier = Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
-            if (userProfile.profileImg != null)
-                Image(bitmap = userProfile.profileImg!!.asImageBitmap(),
+            if (profileBitmap != null)
+                Image(bitmap = profileBitmap!!.asImageBitmap(),
                     contentScale = ContentScale.Crop,
                     contentDescription = "profile_img",
                     modifier = Modifier
@@ -170,6 +167,12 @@ fun UserProfileView(userAccount: UserAccountData, userProfile: UserProfileData) 
                     // HistoryItem(it)
                 }
             }
+        }
+        Button(onClick = {
+            auth.signOut()
+            ActivityManager.returnToLoginActivity(context)
+        }){
+            Text("로그아웃")
         }
     }
 }

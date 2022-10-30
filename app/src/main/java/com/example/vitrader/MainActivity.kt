@@ -1,6 +1,5 @@
 package com.example.vitrader
 
-import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import android.util.Log
@@ -25,11 +24,9 @@ import androidx.navigation.compose.rememberNavController
 import com.example.vitrader.navigation.BottomNavHost
 import com.example.vitrader.navigation.BottomNavigationView
 import com.example.vitrader.screen.main.getMainScreens
-import com.example.vitrader.screen.transaction.HistoryManager
 import com.example.vitrader.theme.VitraderTheme
-import com.example.vitrader.utils.db.HistoryDatabase
-import com.example.vitrader.utils.model.History
-import com.example.vitrader.utils.noRippleClickable
+import com.example.vitrader.utils.*
+import com.example.vitrader.utils.model.OrderBookRepository
 import com.example.vitrader.utils.viewmodel.CoinListViewModel
 import com.example.vitrader.utils.viewmodel.UserAccountViewModel
 import com.example.vitrader.utils.viewmodel.UserProfileViewModel
@@ -48,6 +45,7 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        ActivityManager.activities.add(this)
 
         initializeVariables()
         CoroutineScope(Dispatchers.IO).launch {
@@ -69,6 +67,8 @@ class MainActivity : ComponentActivity() {
         coinListViewModel = ViewModelProvider(this)[CoinListViewModel::class.java]
         userAccountViewModel = ViewModelProvider(this)[UserAccountViewModel::class.java]
         userProfileViewModel = ViewModelProvider(this)[UserProfileViewModel::class.java]
+        OrderBookRepository
+        Rankers
 
         auth = FirebaseAuth.getInstance()
     }
@@ -87,6 +87,15 @@ class MainActivity : ComponentActivity() {
         super.onRestart()
         Log.d("MainActivity", "OnRestart")
     }
+
+    override fun onDestroy() {
+        ActivityManager.activities.remove(this)
+        super.onDestroy()
+    }
+
+    override fun onBackPressed() {
+        super.onBackPressed()
+    }
 }
 
 @Composable
@@ -97,7 +106,7 @@ fun WholeScreenScaffold(userAccountViewModel: UserAccountViewModel, userProfileV
 
     Scaffold(
         topBar = {
-            MainTopAppBar(auth, userProfileViewModel)
+            MainTopAppBar(userProfileViewModel)
         },
         bottomBar = {
             BottomNavigationView(navController, mainScreenDestinationList)
@@ -112,9 +121,10 @@ fun WholeScreenScaffold(userAccountViewModel: UserAccountViewModel, userProfileV
 
 
 @Composable
-fun MainTopAppBar(auth: FirebaseAuth, userProfileViewModel: UserProfileViewModel) {
+fun MainTopAppBar(userProfileViewModel: UserProfileViewModel) {
 
     val context = LocalContext.current
+    val myUid = FirebaseAuth.getInstance().currentUser?.uid
 
     TopAppBar(modifier = Modifier.background(color = Color(0xff1A1B2F))) {
         Text("Vitrader",
@@ -129,12 +139,12 @@ fun MainTopAppBar(auth: FirebaseAuth, userProfileViewModel: UserProfileViewModel
             .clip(CircleShape)
             .noRippleClickable {
                 val intent = Intent(context, ProfileActivity::class.java).apply {
-                    putExtra("email", "")
+                    putExtra("uid", myUid)
                 }
                 context.startActivity(intent)
             }
-        if (userProfileViewModel.profileImg != null)
-            Image(bitmap = userProfileViewModel.profileImg!!.asImageBitmap(),
+        if (userProfileViewModel.profileImage != null)
+            Image(bitmap = userProfileViewModel.profileImage!!.asImageBitmap(),
                 contentDescription = "profile_img",
                 contentScale = ContentScale.Crop,
                 modifier = imageModifier)

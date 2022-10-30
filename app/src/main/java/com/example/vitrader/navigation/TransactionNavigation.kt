@@ -1,5 +1,7 @@
 package com.example.vitrader.navigation
 
+import android.os.Build
+import androidx.annotation.RequiresApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -20,22 +22,26 @@ import com.example.vitrader.screen.transaction.TransactionScreen
 import com.example.vitrader.utils.NumberFormat
 import com.example.vitrader.utils.noRippleClickable
 import com.example.vitrader.utils.viewmodel.CoinViewModel
+import com.example.vitrader.utils.viewmodel.OrderBookViewModel
+import com.example.vitrader.utils.viewmodel.UserProfileViewModel
 
 
+@RequiresApi(Build.VERSION_CODES.O)
 @Composable
-fun TransactionViewPager(coinViewModel: CoinViewModel, userAccountViewModel: UserAccountViewModel) {
-    Scaffold(topBar = { TransactionTopAppBar(coinViewModel, userAccountViewModel) }) {
+fun TransactionViewPager(coinViewModel: CoinViewModel, orderBookViewModel: OrderBookViewModel, userAccountViewModel: UserAccountViewModel, userProfileViewModel: UserProfileViewModel) {
+    Scaffold(topBar = { TransactionTopAppBar(coinViewModel, userProfileViewModel) }) {
 
         Column() {
             TransactionSecondaryTopAppBar(coinViewModel)
-            TransactionNavigationTabLayout(coinViewModel, userAccountViewModel)
+            TransactionNavigationTabLayout(coinViewModel, orderBookViewModel, userAccountViewModel)
         }
     }
 }
 
 
+@RequiresApi(Build.VERSION_CODES.O)
 @Composable
-fun TransactionNavigationTabLayout(coinViewModel: CoinViewModel, userAccountViewModel: UserAccountViewModel) {
+fun TransactionNavigationTabLayout(coinViewModel: CoinViewModel, orderBookViewModel: OrderBookViewModel, userAccountViewModel: UserAccountViewModel) {
 
     val TRANSACTION_PAGE = 0
     val CHART_PAGE = 1
@@ -55,7 +61,7 @@ fun TransactionNavigationTabLayout(coinViewModel: CoinViewModel, userAccountView
         }
         Box(Modifier.fillMaxSize()) {
             if(selectedTab == TRANSACTION_PAGE)
-                TransactionScreen(coinViewModel, userAccountViewModel)
+                TransactionScreen(coinViewModel, orderBookViewModel, userAccountViewModel)
             else if(selectedTab == CHART_PAGE)
                 ChartScreen(coinViewModel, userAccountViewModel)
         }
@@ -64,9 +70,9 @@ fun TransactionNavigationTabLayout(coinViewModel: CoinViewModel, userAccountView
 }
 
 @Composable
-fun TransactionTopAppBar(coinViewModel: CoinViewModel, userAccountViewModel: UserAccountViewModel) {
+fun TransactionTopAppBar(coinViewModel: CoinViewModel, userProfileViewModel: UserProfileViewModel) {
     val symbol = coinViewModel.coin?.info?.symbol
-    var bookmark by remember { mutableStateOf(userAccountViewModel.bookmark.contains(symbol)) }
+    var bookmark by remember { mutableStateOf(userProfileViewModel.bookmark.contains(symbol)) }
 
     TopAppBar(modifier = Modifier.background(color = Color(0xff1A1B2F))) {
         Column() {
@@ -92,7 +98,7 @@ fun TransactionTopAppBar(coinViewModel: CoinViewModel, userAccountViewModel: Use
                         .size(28.dp)
                         .noRippleClickable {
                             bookmark = !bookmark
-                            userAccountViewModel.bookmark(symbol)
+                            userProfileViewModel.bookmark(symbol)
                         },
                     tint = tint
                 )

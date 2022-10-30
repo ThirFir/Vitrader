@@ -1,7 +1,6 @@
 package com.example.vitrader.utils.model
 
 import android.os.Build
-import android.util.Log
 import androidx.annotation.RequiresApi
 import androidx.compose.runtime.mutableStateOf
 import com.example.vitrader.utils.db.UserRemoteDataSource
@@ -9,8 +8,6 @@ import com.example.vitrader.utils.dbDoubleFormat
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import java.time.LocalDateTime
-import java.time.format.DateTimeFormatter
 import kotlin.math.roundToLong
 
 object UserAccountRepository {
@@ -32,7 +29,7 @@ object UserAccountRepository {
         }
     }
 
-    private fun setUserData(newUserAccountData: UserAccountData) {
+    private fun setUserAccountData(newUserAccountData: UserAccountData) {
         _userAccountData.value = newUserAccountData
     }
 
@@ -100,19 +97,8 @@ object UserAccountRepository {
     }
 
     private fun update(newUserAccountData: UserAccountData = this._userAccountData.value) {
-        setUserData(newUserAccountData)
+        setUserAccountData(newUserAccountData)
         userRemoteDataSource.updateAccount(newUserAccountData)
-
-    }
-
-
-    fun addBookmark(symbol: String) {
-        _userAccountData.value.bookmark.add(symbol)
-        userRemoteDataSource.updateBookmark(_userAccountData.value.bookmark)
-    }
-    fun removeBookmark(symbol: String) {
-        _userAccountData.value.bookmark.remove(symbol)
-        userRemoteDataSource.updateBookmark(_userAccountData.value.bookmark)
     }
 
 }

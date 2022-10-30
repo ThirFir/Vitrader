@@ -17,7 +17,6 @@ class UserAccountViewModel : ViewModel() {
     val totalBuyStringFormat: String get() = DecimalFormat("#,###").format(BigDecimal(userAccountData.value.totalBuy).setScale(0, BigDecimal.ROUND_HALF_UP).toLong())
 
     val possessingCoins get() = userAccountData.value.possessingCoins
-    val bookmark get() = userAccountData.value.bookmark
 
 
     /** returns user average buy price of symbol(coin) */
@@ -61,15 +60,5 @@ class UserAccountViewModel : ViewModel() {
         else "보유 수량이 부족합니다"
 
         onMessage(toastMessage)
-    }
-
-    fun bookmark(symbol: String?) {
-        if (symbol != null) {
-            if(userAccountData.value.bookmark.contains(symbol))
-                userAccountRepository.removeBookmark(symbol)
-            else
-                userAccountRepository.addBookmark(symbol)
-        }
-
     }
 }

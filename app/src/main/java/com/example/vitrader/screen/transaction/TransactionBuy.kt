@@ -1,6 +1,8 @@
 package com.example.vitrader.screen.transaction
 
+import android.os.Build
 import android.widget.Toast
+import androidx.annotation.RequiresApi
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.text.KeyboardOptions
@@ -14,6 +16,7 @@ import java.lang.IllegalArgumentException
 
 
 // 지정가 매수 - 시장가가 지정가보다 낮을 경우 바로 매수됨
+@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun BuyByFixedPriceView(coinViewModel: CoinViewModel, userAccountViewModel: UserAccountViewModel) {
 

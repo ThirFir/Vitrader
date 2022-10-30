@@ -55,7 +55,7 @@ fun LoginScreen(navController: NavController?) {
 private fun tryAutoLogin(context: Context, auth: FirebaseAuth) {
     if(auth.currentUser != null) {
         CoroutineScope(Dispatchers.IO).launch {
-            UserRemoteDataSource.createInitialCloudAndRealTimeData(auth.currentUser!!.email!!)
+            UserRemoteDataSource.createInitialCloudAndRealTimeData(auth.currentUser?.uid!!, auth.currentUser!!.email!!.split("@")[0])
         }
         context.startActivity(Intent(context, MainActivity::class.java))
         (context as LoginActivity).finish()
@@ -71,7 +71,7 @@ private fun tryLogin(context: Context, email: String, password: String) {
         .addOnCompleteListener() {
             if (it.isSuccessful) {
                 CoroutineScope(Dispatchers.IO).launch {
-                    UserRemoteDataSource.createInitialCloudAndRealTimeData(auth.currentUser!!.email!!)
+                    UserRemoteDataSource.createInitialCloudAndRealTimeData(it.result.user?.uid!!, it.result.user?.email!!.split("@")[0])
                 }
                 Log.d("LogIn", "로그인 성공")
                 context.startActivity(Intent(context, MainActivity::class.java))

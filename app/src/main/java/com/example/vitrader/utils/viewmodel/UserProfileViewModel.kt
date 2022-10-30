@@ -8,14 +8,24 @@ class UserProfileViewModel: ViewModel() {
     private val userProfileRepository = UserProfileRepository
     private val userProfileData get() = userProfileRepository.userProfileData
 
-    val profileImg get() = userProfileData.value.profileImg
+    val profileImage get() = userProfileData.value.profileImg
     val nickname get() = userProfileData.value.nickname
+    val bookmark get() = userProfileData.value.bookmark
 
-    fun setProfileImg(bitmap: Bitmap?) {
+    fun updateProfileImage(bitmap: Bitmap?) {
         if(bitmap != null)
-            userProfileRepository.setProfileImg(bitmap)
+            userProfileRepository.updateProfileImage(bitmap)
     }
-    fun setNickname(nickname: String) {
-        userProfileRepository.setNickname(nickname)
+    fun updateNickname(nickname: String) {
+        userProfileRepository.updateNickname(nickname)
+    }
+    fun bookmark(symbol: String?) {
+        if (symbol != null) {
+            if(userProfileData.value.bookmark.contains(symbol))
+                userProfileRepository.removeBookmark(symbol)
+            else
+                userProfileRepository.addBookmark(symbol)
+        }
+
     }
 }

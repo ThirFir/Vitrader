@@ -1,9 +1,9 @@
 package com.example.vitrader.screen.main
 
+import android.annotation.SuppressLint
 import android.content.Intent
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
-import android.util.Log
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -21,85 +21,48 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.navigation.NavController
 import com.example.vitrader.ProfileActivity
-import com.example.vitrader.R
 import com.example.vitrader.utils.NumberFormat
-import com.example.vitrader.utils.db.UserRemoteDataSource
+import com.example.vitrader.utils.Ranker
+import com.example.vitrader.utils.Rankers
 import com.example.vitrader.utils.noRippleClickable
 import com.example.vitrader.utils.viewmodel.UserProfileViewModel
-import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.database.DataSnapshot
-import com.google.firebase.database.DatabaseError
-import com.google.firebase.database.FirebaseDatabase
-import com.google.firebase.database.ValueEventListener
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.storage.FirebaseStorage
-import kotlinx.coroutines.tasks.await
+
+
 
 @Composable
-fun RankingScreen(userProfileViewModel: UserProfileViewModel) {
-
-    val ranking = remember { mutableStateListOf<DataSnapshot>() }
-
-    val db = FirebaseDatabase.getInstance("https://vitrader-a8d28-default-rtdb.asia-southeast1.firebasedatabase.app")
-    val dbRef = db.getReference("krw")
-    dbRef.addValueEventListener(object : ValueEventListener {
-        override fun onDataChange(snapshot: DataSnapshot) {
-            dbRef.orderByValue().limitToFirst(100).get().addOnSuccessListener {
-                ranking.clear()
-                it.children.forEach{ data ->
-                    ranking.add(data)
-                }
-            }
-        }
-
-        override fun onCancelled(error: DatabaseError) {
-
-        }
-    })
+fun RankingScreen() {
 
     LazyColumn{
-        itemsIndexed(ranking.sortedByDescending { it.value as Long }) { rank, item ->
-            RankProfile(rank + 1, item, userProfileViewModel)
+        itemsIndexed(Rankers.rankers) { rank, user ->
+            RankProfile(rank + 1, user)
         }
     }
 
 }
 
 @Composable
-fun RankProfile(rank: Int, item: DataSnapshot, userProfileViewModel: UserProfileViewModel) {
+fun RankProfile(rank: Int, user: Ranker) {
 
     val context = LocalContext.current
 
-    val nickname by remember { mutableStateOf("") }
+    Rankers.rankerNickname
+    val nickname by remember { mutableStateOf(Rankers.rankerNickname[user.uid]) }
+    val bitmap by remember { mutableStateOf(Rankers.rankerProfileImage[user.uid]) }
 
-    val storage = FirebaseStorage.getInstance()
-    val storageRef = storage.reference.child(item.key!!)
-
-    var byteArray by remember { mutableStateOf<ByteArray?>(null)}
-    storageRef.getBytes(100000000).addOnCompleteListener {
-        if(it.isSuccessful) {
-            byteArray = it.result
-        }
-    }
-
-    val bitmap: Bitmap? =
-        if (byteArray != null)
-            BitmapFactory.decodeByteArray(byteArray, 0, byteArray!!.size)
-        else null
-
+    
     Row(modifier = Modifier
         .fillMaxWidth()
         .padding(vertical = 12.dp, horizontal = 8.dp)
         .noRippleClickable {
             val intent = Intent(context, ProfileActivity::class.java).apply {
-                putExtra("email", item.key)
+                putExtra("uid", user.uid)
             }
             context.startActivity(intent)
         },
@@ -138,7 +101,7 @@ fun RankProfile(rank: Int, item: DataSnapshot, userProfileViewModel: UserProfile
                             CircleShape)
                         .size(40.dp))
             else
-                Image(bitmap = bitmap.asImageBitmap(),
+                Image(bitmap = bitmap!!.asImageBitmap(),
                     contentScale = ContentScale.Crop,
                     contentDescription = "profile_img",
                     modifier = Modifier
@@ -146,10 +109,10 @@ fun RankProfile(rank: Int, item: DataSnapshot, userProfileViewModel: UserProfile
                         .clip(
                             CircleShape)
                         .size(40.dp))
-            Text(item.key.toString(), color = Color.White, maxLines = 1, modifier = Modifier.weight(1f), fontSize = 13.5.sp)
+            Text(nickname ?: "Unknown", color = Color.White, maxLines = 1, modifier = Modifier.weight(1f), fontSize = 13.5.sp)
 
         }
 
-        Text(NumberFormat.krwFormat(item.value as Long) + " KRW", color = Color.White, maxLines = 1, modifier = Modifier.width(150.dp), fontSize = 13.5.sp, textAlign = TextAlign.End)
+        Text(NumberFormat.krwFormat(user.krw) + " KRW", color = Color.White, maxLines = 1, modifier = Modifier.width(150.dp), fontSize = 13.5.sp, textAlign = TextAlign.End)
     }
 }

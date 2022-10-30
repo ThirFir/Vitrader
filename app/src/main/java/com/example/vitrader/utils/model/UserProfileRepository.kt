@@ -1,7 +1,6 @@
 package com.example.vitrader.utils.model
 
 import android.graphics.Bitmap
-import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
 import com.example.vitrader.utils.db.UserRemoteDataSource
 import kotlinx.coroutines.CoroutineScope
@@ -19,12 +18,20 @@ object UserProfileRepository {
         }
     }
 
-    fun setProfileImg(bitmap: Bitmap) {
+    fun updateProfileImage(bitmap: Bitmap) {
         _userProfileData.value = UserProfileData(bitmap, userProfileData.value.nickname)
-        userRemoteDataSource.updateProfile(_userProfileData.value)
+        userRemoteDataSource.updateProfileImage(bitmap)
     }
-    fun setNickname(nickname: String) {
+    fun updateNickname(nickname: String) {
         _userProfileData.value = UserProfileData(userProfileData.value.profileImg, nickname)
-        userRemoteDataSource.updateProfile(_userProfileData.value)
+        userRemoteDataSource.updateNickname(nickname)
+    }
+    fun addBookmark(symbol: String) {
+        _userProfileData.value.bookmark.add(symbol)
+        userRemoteDataSource.updateBookmark(userProfileData.value.bookmark)
+    }
+    fun removeBookmark(symbol: String) {
+        _userProfileData.value.bookmark.remove(symbol)
+        userRemoteDataSource.updateBookmark(userProfileData.value.bookmark)
     }
 }

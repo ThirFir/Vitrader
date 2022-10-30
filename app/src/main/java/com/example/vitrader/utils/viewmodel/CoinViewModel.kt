@@ -6,8 +6,7 @@ import com.example.vitrader.utils.model.CoinRepository
 import java.lang.IllegalArgumentException
 
 class CoinViewModel(private val symbol: String) : ViewModel() {
-    private val coinRepository = CoinRepository
-    val coin get() = coinRepository.coins[symbol]
+    val coin get() = CoinRepository.coins[symbol]
 }
 
 class CoinViewModelFactory(private val symbol: String) : ViewModelProvider.Factory {

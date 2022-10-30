@@ -55,10 +55,10 @@ fun BottomNavHost(userProfileViewModel: UserProfileViewModel, userAccountViewMod
             HotCoinsScreen(coinListViewModel) { onCoinClicked(it) }
         }
         composable(MainScreenDestination.COIN_LIST.route) {
-            CoinListScreen(coinListViewModel, userAccountViewModel) { onCoinClicked(it) }
+            CoinListScreen(coinListViewModel, userAccountViewModel, userProfileViewModel) { onCoinClicked(it) }
         }
         composable(MainScreenDestination.RANKING.route) {
-            RankingScreen(userProfileViewModel)
+            RankingScreen()
         }
         composable(MainScreenDestination.PROFILE.route) {
             ProfileScreen(userAccountViewModel, coinListViewModel)

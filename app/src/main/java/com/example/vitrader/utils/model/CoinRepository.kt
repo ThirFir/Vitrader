@@ -18,14 +18,12 @@ object CoinRepository {
         launchGettingExternalCoinData()
     }
 
-    private fun getImage(ticker: Coin.Ticker): Bitmap? = _coins[ticker.market]?.image
-
     fun addCoin(coin: Coin) {
         _coins[coin.info.symbol] = coin
     }
 
     fun updateTicker(newTicker: Coin.Ticker) {
-        _coins[newTicker.market] = Coin(_coins[newTicker.market]?.info!!, newTicker, getImage(newTicker))
+        _coins[newTicker.market] = Coin(_coins[newTicker.market]?.info!!, newTicker, _coins[newTicker.market]?.image)
     }
 
     fun launchGettingExternalCoinData() {
@@ -36,15 +34,13 @@ object CoinRepository {
         }
     }
 
-    fun getMostActiveCoin(): Coin {
+    fun getMostActiveCoin(): Coin =
+        _coins.values.sortedByDescending { it.ticker.acc_trade_price_24h }[0]
 
-        return _coins.values.sortedByDescending { it.ticker.acc_trade_price_24h }[0]
-    }
 
     fun getActiveCoins(): List<Coin> {
 
         val list = _coins.values.sortedByDescending { it.ticker.acc_trade_price_24h }
-
 
         return listOf(list[1], list[2], list[3], list[4])
     }

@@ -62,14 +62,20 @@ private fun registerUser(
 
     val auth = Firebase.auth
     auth.createUserWithEmailAndPassword(email, password)
-        .addOnCompleteListener() { task ->
-            if (task.isSuccessful) {
+        .addOnCompleteListener() { createTask ->
+            if (createTask.isSuccessful) {
+                val uid = createTask.result.user?.uid!!
+//                createTask.result.user?.sendEmailVerification()
+//                    ?.addOnCompleteListener{
+//
+//                    }
+
                 auth.currentUser?.sendEmailVerification()
                     ?.addOnCompleteListener { sendTask ->
                         if (sendTask.isSuccessful) {
 
                             CoroutineScope(Dispatchers.IO).launch {
-                                UserRemoteDataSource.createInitialCloudAndRealTimeData(auth.currentUser!!.email!!)
+                                UserRemoteDataSource.createInitialCloudAndRealTimeData(uid, email.split("@")[0])
                             }
 
                             navController?.popBackStack()
@@ -81,7 +87,7 @@ private fun registerUser(
 
                     }
             } else
-                onCompleted(false, task.exception?.message)
+                onCompleted(false, createTask.exception?.message)
 
         }
 }

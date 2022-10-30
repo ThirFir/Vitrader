@@ -6,10 +6,12 @@ import androidx.activity.compose.setContent
 import androidx.navigation.compose.rememberNavController
 import com.example.vitrader.navigation.LoginNavHost
 import com.example.vitrader.theme.VitraderTheme
+import com.example.vitrader.utils.ActivityManager
 
 class LoginActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        ActivityManager.activities.add(this)
 
         setContent {
             VitraderTheme {
@@ -17,5 +19,10 @@ class LoginActivity : ComponentActivity() {
                 LoginNavHost(navHostController = navHostController)
             }
         }
+    }
+
+    override fun onDestroy() {
+        ActivityManager.activities.remove(this)
+        super.onDestroy()
     }
 }

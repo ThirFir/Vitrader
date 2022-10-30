@@ -8,9 +8,11 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -18,19 +20,24 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.colorResource
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.vitrader.R
+import com.example.vitrader.theme.Blue1200
 import com.example.vitrader.theme.Blue1600
-import com.example.vitrader.utils.NumberFormat
-import com.example.vitrader.utils.SymbolFormat
+import com.example.vitrader.utils.*
 import com.example.vitrader.utils.db.HistoryDatabase
 import com.example.vitrader.utils.model.History
 import com.example.vitrader.utils.model.UserAccountRepository
-import com.example.vitrader.utils.noRippleClickable
 import com.example.vitrader.utils.viewmodel.CoinViewModel
+import com.example.vitrader.utils.viewmodel.OrderBookViewModel
 import com.example.vitrader.utils.viewmodel.UserAccountViewModel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -38,9 +45,10 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
 import java.lang.IllegalArgumentException
 import java.math.BigDecimal
+import java.math.RoundingMode
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
-
+import java.util.*
 
 internal enum class TransactionState(val koreaName: String) {
     BUY("매수"), SELL("매도"), HISTORY("거래내역")
@@ -48,13 +56,95 @@ internal enum class TransactionState(val koreaName: String) {
 
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
-fun TransactionScreen(coinViewModel: CoinViewModel, userAccountViewModel: UserAccountViewModel) {
+fun TransactionScreen(coinViewModel: CoinViewModel, orderBookViewModel: OrderBookViewModel, userAccountViewModel: UserAccountViewModel) {
+
+    val symbol = coinViewModel.coin!!.info.symbol
+
+    val asks = remember { mutableStateMapOf<Double, Double>() }
+    val bids = remember { mutableStateMapOf<Double, Double>() }
+
+    var maxSize by remember { mutableStateOf(Double.MIN_VALUE) }
+
+    orderBookViewModel.orderBook!!.units.forEachIndexed { index, unit ->
+        if(index == 0) {
+            asks.clear()
+            bids.clear()
+        }
+        val askSize = unit["ask_size"]!!
+        val bidSize = unit["bid_size"]!!
+        asks[unit["ask_price"]!!] = askSize  // 매도 호가
+        bids[unit["bid_price"]!!] = bidSize  // 매수 호가
+
+        if(askSize > maxSize)
+            maxSize = askSize
+        if(bidSize > maxSize)
+            maxSize = bidSize
+    }
+
     Surface(modifier = Modifier.fillMaxSize()) {
         Row(){
             Box(Modifier
                 .fillMaxHeight()
-                .weight(2f)){
-                //TODO("호가")
+                .weight(2.3f)){
+
+                val scrollState = rememberScrollState()
+                Column(modifier = Modifier
+                    .verticalScroll(scrollState)) {
+                    for (ask in asks.toSortedMap(Collections.reverseOrder())) {
+                        val barSize = (ask.value / maxSize).toFloat()
+                        val spaceSize = 1f - barSize + Float.MIN_VALUE
+                        Row(modifier = Modifier.height(36.dp)) {
+                            if (ask.key != 0.toDouble()) {
+                                Box(modifier = Modifier.fillMaxHeight().weight(3f).background(color = Color(
+                                    0xFFE2CBCB)).padding(horizontal = 2.dp),
+                                    contentAlignment = Alignment.CenterEnd) {
+                                    AutoResizeText(text = NumberFormat.coinPrice(ask.key), textAlign = TextAlign.End, color = if(ask.key > coinViewModel.coin!!.ticker.prev_closing_price) Color.Green else Color.Red)
+                                }
+                                Spacer(Modifier.fillMaxHeight().width(1.dp).background(Blue1200))
+                                Box(modifier = Modifier.fillMaxHeight().weight(2f).background(color = Color(
+                                    0xFFE2CBCB)),
+                                    contentAlignment = Alignment.CenterStart) {
+                                    Row(modifier = Modifier.height(20.dp).fillMaxWidth()) {
+                                        Box(modifier = Modifier.fillMaxHeight().weight(barSize).background(color = Color(
+                                            0xFFD17F7F)))
+
+                                        Spacer(Modifier.fillMaxHeight().weight(spaceSize))
+                                    }
+                                    AutoResizeText(text = BigDecimal(ask.value).setScale(3,
+                                        RoundingMode.HALF_UP).toPlainString(), modifier = Modifier.padding().padding(2.dp))
+                                }
+                            }
+                        }
+                        Spacer(Modifier.fillMaxWidth().height(1.dp).background(Blue1200))
+                    }
+                    for (bid in bids.toSortedMap(Collections.reverseOrder())) {
+                        val barSize = (bid.value / maxSize).toFloat()
+                        val spaceSize = 1f - barSize + Float.MIN_VALUE
+                        Row(modifier = Modifier.height(36.dp)) {
+                            if (bid.key != 0.toDouble()) {
+                                Box(modifier = Modifier.fillMaxHeight().weight(3f).background(color = Color(
+                                    0xFFD2E7CF)).padding(horizontal = 2.dp),
+                                    contentAlignment = Alignment.CenterEnd) {
+                                    AutoResizeText(text = NumberFormat.coinPrice(bid.key), textAlign = TextAlign.End, color = if(bid.key > coinViewModel.coin!!.ticker.prev_closing_price) Color.Green else Color.Red)
+                                }
+                                Spacer(Modifier.fillMaxHeight().width(1.dp).background(Blue1200))
+                                Box(modifier = Modifier.fillMaxHeight().weight(2f).background(color = Color(
+                                    0xFFD2E7CF)),
+                                    contentAlignment = Alignment.CenterStart) {
+                                    Row(modifier = Modifier.height(20.dp).fillMaxWidth()) {
+                                        Box(modifier = Modifier.fillMaxHeight().weight(barSize).background(color = Color(
+                                            0xFF65D358)))
+
+                                        Spacer(Modifier.fillMaxHeight().weight(spaceSize))
+                                    }
+                                    AutoResizeText(text = BigDecimal(bid.value).setScale(3,
+                                        RoundingMode.HALF_UP).toPlainString(), modifier = Modifier.padding().padding(2.dp))
+                                }
+                            }
+                        }
+                        Spacer(Modifier.fillMaxWidth().height(1.dp).background(Blue1200))
+                    }
+                }
             }
             Column(Modifier.weight(3f)){
                 var selectedTap by remember { mutableStateOf(TransactionState.BUY) }
@@ -141,7 +231,7 @@ internal fun TransactingScreen(coinViewModel: CoinViewModel, userAccountViewMode
                                 coinViewModel.coin!!.ticker.trade_price * userAccountViewModel.getCoinCount(symbol).toDouble()) + " KRW"
 
                         }
-                    Text(textValue, fontSize = 13.sp, fontWeight = FontWeight.Bold, textAlign = TextAlign.End)
+                    AutoResizeText(textValue, textStyle = TextStyle(fontSize = 13.sp, fontWeight = FontWeight.Bold), textAlign = TextAlign.End)
                 }
             }
             if (selectedBuyWay[0]) PreparingScreen()
@@ -344,47 +434,5 @@ fun HistoryItem(history: History) {
                 val fontSize = if(d.second.length > 18) 12.sp else 14.sp
                 Text(d.second, fontSize = fontSize)
             }
-    }
-}
-
-object HistoryManager {
-
-    private val _histories = mutableStateListOf<History>()
-    val histories get() = _histories
-
-    @RequiresApi(Build.VERSION_CODES.O)
-    fun makeHistory(symbol: String, price: Double, count: Double, transaction: String): History {
-        val date = LocalDateTime.now()
-        val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")
-        val formatted = date.format(formatter)
-        return History(symbol = symbol,
-            transaction = transaction,
-            price = price,
-            count = count,
-            date = formatted)
-    }
-
-    fun addHistory(history: History, context: Context) {
-        _histories.add(0, history)
-        CoroutineScope(Dispatchers.IO).launch {
-            HistoryDatabase.getDatabase(context)?.historyDao()?.insertHistory(history)
-        }
-    }
-
-    suspend fun initializeHistories(context: Context) {
-        val list = CoroutineScope(Dispatchers.IO).async {
-            HistoryDatabase.getDatabase(context)?.historyDao()?.getAllHistories() ?: listOf()
-        }.await()
-        _histories.addAll(list.reversed())
-    }
-
-    fun getSymbolHistories(symbol: String): List<History> {
-        val symbolHistories = mutableListOf<History>()
-
-        for(h in histories)
-            if(h.symbol == symbol)
-                symbolHistories.add(h)
-
-        return symbolHistories
     }
 }

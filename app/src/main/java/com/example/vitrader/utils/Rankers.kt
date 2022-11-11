@@ -28,16 +28,14 @@ object Rankers {
         db.collection("account").orderBy("krw").limit(RANKER_COUNT).get().addOnSuccessListener {
             if(it.metadata.isFromCache) return@addOnSuccessListener
             _rankers.clear()
-            for(doc in it.documents) {
+            it.documents.sortedByDescending { ranker -> ranker["krw"] as Long }.forEachIndexed { rank, doc ->
                 val krw = doc["krw"] as Long
                 val uid = doc.reference.id
 
-                _rankers.add(Ranker(uid, krw))
+                _rankers.add(Ranker(uid, krw, rank + 1))
                 loadRankerProfileImage(uid)
                 loadRankerNickname(uid)
             }
-
-            _rankers.sortByDescending { rank -> rank.krw }
 
         }
     }
@@ -73,4 +71,7 @@ object Rankers {
 
         }
     }
+
+    fun getRank(uid: String): Int = rankers.find { it.uid == uid }?.rank ?: 0
+
 }

@@ -3,10 +3,12 @@ package com.example.vitrader
 import android.content.Intent
 import android.os.Bundle
 import android.util.Log
+import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccountCircle
@@ -23,9 +25,12 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.navigation.compose.rememberNavController
 import com.example.vitrader.navigation.BottomNavHost
 import com.example.vitrader.navigation.BottomNavigationView
+import com.example.vitrader.screen.LoadingScreen
 import com.example.vitrader.screen.main.getMainScreens
 import com.example.vitrader.theme.VitraderTheme
 import com.example.vitrader.utils.*
+import com.example.vitrader.utils.db.UpbitWebSocketListener
+import com.example.vitrader.utils.model.CoinRepository
 import com.example.vitrader.utils.model.OrderBookRepository
 import com.example.vitrader.utils.viewmodel.CoinListViewModel
 import com.example.vitrader.utils.viewmodel.UserAccountViewModel
@@ -34,30 +39,31 @@ import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import androidx.compose.foundation.shape.CircleShape as CircleShape
 
 
 class MainActivity : ComponentActivity() {
     private lateinit var coinListViewModel: CoinListViewModel
     private lateinit var userAccountViewModel: UserAccountViewModel
     private lateinit var userProfileViewModel: UserProfileViewModel
-    private lateinit var auth: FirebaseAuth
+    private var pressedTime = 0L
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         ActivityManager.activities.add(this)
 
         initializeVariables()
-        CoroutineScope(Dispatchers.IO).launch {
+        CoroutineScope(Dispatchers.Default).launch {
             HistoryManager.initializeHistories(this@MainActivity)
         }
 
         setContent {
             VitraderTheme() {
                 // A surface container using the 'background' color from the theme
-                Surface(
-                    color = MaterialTheme.colors.background) {
-                    WholeScreenScaffold(userAccountViewModel, userProfileViewModel, coinListViewModel, auth)
+                Surface(color = MaterialTheme.colors.background) {
+                    if(UpbitWebSocketListener.isCoinLoadCompleted.value)
+                        WholeScreenScaffold(userAccountViewModel, userProfileViewModel, coinListViewModel)
+                    else
+                        LoadingScreen()
                 }
             }
         }
@@ -67,10 +73,9 @@ class MainActivity : ComponentActivity() {
         coinListViewModel = ViewModelProvider(this)[CoinListViewModel::class.java]
         userAccountViewModel = ViewModelProvider(this)[UserAccountViewModel::class.java]
         userProfileViewModel = ViewModelProvider(this)[UserProfileViewModel::class.java]
+        CoinRepository
         OrderBookRepository
         Rankers
-
-        auth = FirebaseAuth.getInstance()
     }
 
     override fun onResume() {
@@ -94,12 +99,24 @@ class MainActivity : ComponentActivity() {
     }
 
     override fun onBackPressed() {
-        super.onBackPressed()
+        if (pressedTime == 0L) {
+            Toast.makeText(this@MainActivity, " 한 번 더 누르면 종료됩니다.", Toast.LENGTH_LONG).show()
+            pressedTime = System.currentTimeMillis()
+        } else {
+            val seconds = System.currentTimeMillis() - pressedTime
+            if (seconds > 2000L) {
+                Toast.makeText(this@MainActivity, " 한 번 더 누르면 종료됩니다.", Toast.LENGTH_LONG).show()
+                pressedTime = 0
+            } else {
+                super.onBackPressed()
+                ActivityManager.finishAll()
+            }
+        }
     }
 }
 
 @Composable
-fun WholeScreenScaffold(userAccountViewModel: UserAccountViewModel, userProfileViewModel: UserProfileViewModel, coinListViewModel: CoinListViewModel, auth: FirebaseAuth) {
+fun WholeScreenScaffold(userAccountViewModel: UserAccountViewModel, userProfileViewModel: UserProfileViewModel, coinListViewModel: CoinListViewModel) {
 
     val navController = rememberNavController()
     val mainScreenDestinationList = getMainScreens()

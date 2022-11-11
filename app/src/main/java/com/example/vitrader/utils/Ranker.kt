@@ -1,3 +1,3 @@
 package com.example.vitrader.utils
 
-data class Ranker(val uid: String, var krw: Long)
+data class Ranker(val uid: String, var krw: Long, var rank: Int)

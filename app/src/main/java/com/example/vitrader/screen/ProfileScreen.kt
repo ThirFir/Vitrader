@@ -29,26 +29,21 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.vitrader.utils.ActivityManager
-import com.example.vitrader.utils.HistoryManager
-import com.example.vitrader.utils.NumberFormat
+import com.example.vitrader.utils.*
 import com.example.vitrader.utils.model.UserAccountData
 import com.example.vitrader.utils.model.UserProfileData
-import com.example.vitrader.utils.noRippleClickable
+import com.example.vitrader.utils.viewmodel.CoinListViewModel
 import com.example.vitrader.utils.viewmodel.UserProfileViewModel
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.storage.FirebaseStorage
 
 @Composable
-fun ProfileScreen(userAccount: UserAccountData, userProfile: UserProfileData, userProfileViewModel: UserProfileViewModel) {
-
-    val context = LocalContext.current
-
-    val storage = FirebaseStorage.getInstance()
-    val storageRef = storage.reference
+fun ProfileScreen(userAccount: UserAccountData, userProfile: UserProfileData, userProfileViewModel: UserProfileViewModel, coinListViewModel: CoinListViewModel, uid: String) {
 
     Scaffold(
         topBar = { ProfileTopAppBar() }
@@ -56,7 +51,7 @@ fun ProfileScreen(userAccount: UserAccountData, userProfile: UserProfileData, us
 
         Surface(modifier = Modifier.fillMaxSize()) {
             Column(modifier = Modifier.fillMaxSize()) {
-                UserProfileView(userAccount, userProfile, userProfileViewModel)
+                UserProfileView(userAccount, userProfile, userProfileViewModel, coinListViewModel, uid)
             }
         }
     }
@@ -71,7 +66,7 @@ fun ProfileTopAppBar() {
                 .weight(1f),
             fontSize = 20.sp)
         IconButton(onClick = { /*TODO*/ }) {
-            Icon(imageVector = Icons.Default.Edit, contentDescription = "Edit Nickname", tint = Color.LightGray)
+            Icon(imageVector = Icons.Default.Edit, contentDescription = "Edit", tint = Color.LightGray)
         }
     }
 }
@@ -90,7 +85,7 @@ private fun Uri.parseBitmap(context: Context): Bitmap {
 }
 
 @Composable
-fun UserProfileView(userAccount: UserAccountData, userProfile: UserProfileData, userProfileViewModel: UserProfileViewModel) {
+fun UserProfileView(userAccount: UserAccountData, userProfile: UserProfileData, userProfileViewModel: UserProfileViewModel, coinListViewModel: CoinListViewModel, uid: String) {
 
     val context = LocalContext.current
     val auth = FirebaseAuth.getInstance()
@@ -104,7 +99,6 @@ fun UserProfileView(userAccount: UserAccountData, userProfile: UserProfileData, 
             }
         }
     }
-
 
     val intent = Intent(Intent.ACTION_GET_CONTENT, MediaStore.Images.Media.EXTERNAL_CONTENT_URI).apply {
         type = "image/*"
@@ -144,19 +138,34 @@ fun UserProfileView(userAccount: UserAccountData, userProfile: UserProfileData, 
             Text(userProfile.nickname, fontSize = 24.sp, fontWeight = FontWeight.Bold, modifier = Modifier
                 .padding()
                 .padding(vertical = 20.dp))
-            Text("Profile DescriptionProfile DescriptionProfile DescriptionProfile DescriptionProfile Description", fontSize = 14.sp, maxLines = 3, modifier = Modifier.width(250.dp).height(60.dp))
+            Text("아름드리 나래 아름드리 옅구름 여우비 로운 곰다시 예그리나 아리아 달볓 비나리 아리아 컴퓨터 가온해 별하 비나리 미리내 늘품 나래 여우별 우리는 옅구름 감사합니다" +
+                    " 나래 곰다시 별빛 나비잠 노트북 도르레 도서 달볓 사과 바람꽃 도서 책방 옅구름 감사합니다 감또개 도서관 감사합니다 포도 노트북 그루잠 감사합니다" +
+                    " 감사합니다 여우비 이플 그루잠 비나리 곰다시.", fontSize = 14.sp, maxLines = 3, modifier = Modifier.width(250.dp).height(60.dp))
         }
+        Spacer(Modifier.height(30.dp))
         Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 40.dp)) {
             Row(modifier = Modifier.fillMaxWidth()) {
-                Text("보유 KRW", modifier = Modifier.weight(1f), fontWeight = FontWeight.Bold)
-                Text(NumberFormat.krwFormat(userAccount.krw), fontWeight = FontWeight.Bold)
+                Text("보유 KRW", modifier = Modifier.width(80.dp), fontWeight = FontWeight.Bold, textAlign = TextAlign.End)
+                AutoResizeText(NumberFormat.krwFormat(userAccount.krw), textStyle = TextStyle(fontWeight = FontWeight.Bold), modifier = Modifier.fillMaxWidth(), textAlign = TextAlign.End)
             }
             Row(modifier = Modifier.fillMaxWidth()) {
-                Text("랭킹", modifier = Modifier.weight(1f), fontWeight = FontWeight.Bold)
-                Text("\$위", fontWeight = FontWeight.Bold)
+                Text("랭킹", modifier = Modifier.width(80.dp), fontWeight = FontWeight.Bold, textAlign = TextAlign.End)
+                Text("${Rankers.getRank(uid)}위", fontWeight = FontWeight.Bold, modifier = Modifier.fillMaxWidth(), textAlign = TextAlign.End)
             }
-            Row(modifier = Modifier.fillMaxWidth()) {
-                Text("보유 중", modifier = Modifier.weight(1f), fontWeight = FontWeight.Bold)
+        }
+        Spacer(Modifier.height(30.dp))
+        Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp)) {
+            Row(modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp)) {
+                Text("보유 중인 코인", fontWeight = FontWeight.Bold)
+            }
+            for (possess in userAccount.possessingCoins) {
+                val coin = coinListViewModel.coins[possess.key]!!
+                Row(modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp)) {
+                    AutoResizeText(coin.info.name, modifier = Modifier.width(80.dp))
+                    AutoResizeText(SymbolFormat.get(possess.key), modifier = Modifier.width(80.dp))
+                    Image(coin.image!!.asImageBitmap(), contentDescription = null)
+
+                }
             }
         }
 

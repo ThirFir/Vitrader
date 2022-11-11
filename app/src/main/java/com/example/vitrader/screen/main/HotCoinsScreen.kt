@@ -16,11 +16,13 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.vitrader.R
 import com.example.vitrader.theme.Blue1800
+import com.example.vitrader.utils.AutoResizeText
 import com.example.vitrader.utils.model.Coin
 import com.example.vitrader.utils.viewmodel.CoinListViewModel
 import com.example.vitrader.utils.NumberFormat
@@ -132,13 +134,13 @@ fun ItemCoinViewWithIcon(coin : Coin, onClicked : (String) -> Unit) {
             Spacer(Modifier.size(6.dp))
             Text(coin.info.symbol.substring(4, coin.info.symbol.length), fontWeight = FontWeight.Bold)
             Spacer(Modifier.size(6.dp))
-            Text(coin.info.name, fontWeight = FontWeight.Normal)
+            AutoResizeText(coin.info.name, textStyle = TextStyle(fontWeight = FontWeight.Normal))
 
             Spacer(Modifier.weight(1f))
             Column(horizontalAlignment = Alignment.End) {
                 val price = coin.ticker.trade_price
 
-                Text(NumberFormat.coinPrice(price), fontWeight = FontWeight.Light)
+                AutoResizeText(NumberFormat.coinPrice(price), textStyle = TextStyle(fontWeight = FontWeight.Light))
 
                 Text(NumberFormat.coinRate(coin.ticker.signed_change_rate),
                     fontSize = 14.5.sp,

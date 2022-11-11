@@ -20,10 +20,8 @@ import com.example.vitrader.utils.viewmodel.UserAccountViewModel
 object UpbitAPI {
     const val BASE_URL = "https://api.upbit.com/v1/"
     const val ALL_COIN_SUB_URL = "market/all"
-
     const val WEB_SOCKET = "wss://api.upbit.com/websocket/v1"
 }
-
 
 fun dbDoubleFormat(value: Double) : Double = String.format("%.8f", value).toDouble()
 
@@ -39,7 +37,7 @@ inline fun Modifier.noRippleClickable(crossinline onClick: () -> Unit): Modifier
 fun AutoResizeText(text: String,
                    modifier: Modifier = Modifier,
                    color: Color = colorResource(id = R.color.white),
-                   textAlign: TextAlign = TextAlign.Center,
+                   textAlign: TextAlign = TextAlign.Start,
                    textStyle: TextStyle? = null,
                    targetTextSizeHeight: TextUnit? = textStyle?.fontSize,
                    maxLines: Int = 1) {

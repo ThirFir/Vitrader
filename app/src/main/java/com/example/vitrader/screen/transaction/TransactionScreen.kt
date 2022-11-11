@@ -58,17 +58,15 @@ internal enum class TransactionState(val koreaName: String) {
 @Composable
 fun TransactionScreen(coinViewModel: CoinViewModel, orderBookViewModel: OrderBookViewModel, userAccountViewModel: UserAccountViewModel) {
 
-    val symbol = coinViewModel.coin!!.info.symbol
-
     val asks = remember { mutableStateMapOf<Double, Double>() }
     val bids = remember { mutableStateMapOf<Double, Double>() }
-
     var maxSize by remember { mutableStateOf(Double.MIN_VALUE) }
 
     orderBookViewModel.orderBook!!.units.forEachIndexed { index, unit ->
         if(index == 0) {
             asks.clear()
             bids.clear()
+            maxSize = Double.MIN_VALUE
         }
         val askSize = unit["ask_size"]!!
         val bidSize = unit["bid_size"]!!
@@ -90,59 +88,17 @@ fun TransactionScreen(coinViewModel: CoinViewModel, orderBookViewModel: OrderBoo
                 val scrollState = rememberScrollState()
                 Column(modifier = Modifier
                     .verticalScroll(scrollState)) {
+                    Spacer(Modifier
+                        .fillMaxWidth()
+                        .height(1.dp)
+                        .background(Blue1200))
                     for (ask in asks.toSortedMap(Collections.reverseOrder())) {
-                        val barSize = (ask.value / maxSize).toFloat()
-                        val spaceSize = 1f - barSize + Float.MIN_VALUE
-                        Row(modifier = Modifier.height(36.dp)) {
-                            if (ask.key != 0.toDouble()) {
-                                Box(modifier = Modifier.fillMaxHeight().weight(3f).background(color = Color(
-                                    0xFFE2CBCB)).padding(horizontal = 2.dp),
-                                    contentAlignment = Alignment.CenterEnd) {
-                                    AutoResizeText(text = NumberFormat.coinPrice(ask.key), textAlign = TextAlign.End, color = if(ask.key > coinViewModel.coin!!.ticker.prev_closing_price) Color.Green else Color.Red)
-                                }
-                                Spacer(Modifier.fillMaxHeight().width(1.dp).background(Blue1200))
-                                Box(modifier = Modifier.fillMaxHeight().weight(2f).background(color = Color(
-                                    0xFFE2CBCB)),
-                                    contentAlignment = Alignment.CenterStart) {
-                                    Row(modifier = Modifier.height(20.dp).fillMaxWidth()) {
-                                        Box(modifier = Modifier.fillMaxHeight().weight(barSize).background(color = Color(
-                                            0xFFD17F7F)))
-
-                                        Spacer(Modifier.fillMaxHeight().weight(spaceSize))
-                                    }
-                                    AutoResizeText(text = BigDecimal(ask.value).setScale(3,
-                                        RoundingMode.HALF_UP).toPlainString(), modifier = Modifier.padding().padding(2.dp))
-                                }
-                            }
-                        }
-                        Spacer(Modifier.fillMaxWidth().height(1.dp).background(Blue1200))
+                        OrderBookItem(ask.key, ask.value, coinViewModel.coin!!.ticker.prev_closing_price, maxSize,
+                            Color(0x8FB60202), Color(0xA3D17F7F))
                     }
                     for (bid in bids.toSortedMap(Collections.reverseOrder())) {
-                        val barSize = (bid.value / maxSize).toFloat()
-                        val spaceSize = 1f - barSize + Float.MIN_VALUE
-                        Row(modifier = Modifier.height(36.dp)) {
-                            if (bid.key != 0.toDouble()) {
-                                Box(modifier = Modifier.fillMaxHeight().weight(3f).background(color = Color(
-                                    0xFFD2E7CF)).padding(horizontal = 2.dp),
-                                    contentAlignment = Alignment.CenterEnd) {
-                                    AutoResizeText(text = NumberFormat.coinPrice(bid.key), textAlign = TextAlign.End, color = if(bid.key > coinViewModel.coin!!.ticker.prev_closing_price) Color.Green else Color.Red)
-                                }
-                                Spacer(Modifier.fillMaxHeight().width(1.dp).background(Blue1200))
-                                Box(modifier = Modifier.fillMaxHeight().weight(2f).background(color = Color(
-                                    0xFFD2E7CF)),
-                                    contentAlignment = Alignment.CenterStart) {
-                                    Row(modifier = Modifier.height(20.dp).fillMaxWidth()) {
-                                        Box(modifier = Modifier.fillMaxHeight().weight(barSize).background(color = Color(
-                                            0xFF65D358)))
-
-                                        Spacer(Modifier.fillMaxHeight().weight(spaceSize))
-                                    }
-                                    AutoResizeText(text = BigDecimal(bid.value).setScale(3,
-                                        RoundingMode.HALF_UP).toPlainString(), modifier = Modifier.padding().padding(2.dp))
-                                }
-                            }
-                        }
-                        Spacer(Modifier.fillMaxWidth().height(1.dp).background(Blue1200))
+                        OrderBookItem(bid.key, bid.value, coinViewModel.coin!!.ticker.prev_closing_price, maxSize,
+                            Color(0x6816A700), Color(0x9E65D358))
                     }
                 }
             }
@@ -160,6 +116,63 @@ fun TransactionScreen(coinViewModel: CoinViewModel, orderBookViewModel: OrderBoo
             }
         }
     }
+}
+
+@Composable
+fun OrderBookItem(price: Double, size: Double, prev_closing_price: Double, maxSize: Double, backgroundColor: Color, barColor: Color) {
+
+    val barSize = (size / maxSize).toFloat()
+    val spaceSize = 1f - barSize + Float.MIN_VALUE
+    if (price != 0.toDouble()) {
+        Row(modifier = Modifier.height(44.dp)) {
+
+            Box(modifier = Modifier
+                .fillMaxHeight()
+                .weight(3f)
+                .background(color = backgroundColor)
+                .padding(horizontal = 2.dp),
+                contentAlignment = Alignment.CenterEnd) {
+                Column(horizontalAlignment = Alignment.End) {
+                    val rate = price / prev_closing_price - 1f
+                    val color =
+                        if (price > prev_closing_price) Color.Green else if (price == prev_closing_price) Color.White else Color.Red
+                    AutoResizeText(text = NumberFormat.coinPrice(price),
+                        color = color)
+                    Text(NumberFormat.coinRate(rate), color = color)
+                }
+            }
+            Spacer(Modifier
+                .fillMaxHeight()
+                .width(1.dp)
+                .background(Blue1200))
+            Box(modifier = Modifier
+                .fillMaxHeight()
+                .weight(2f)
+                .background(color = backgroundColor),
+                contentAlignment = Alignment.CenterStart) {
+                Row(modifier = Modifier
+                    .height(20.dp)
+                    .fillMaxWidth()) {
+                    Box(modifier = Modifier
+                        .fillMaxHeight()
+                        .weight(barSize)
+                        .background(color = barColor))
+
+                    Spacer(Modifier
+                        .fillMaxHeight()
+                        .weight(spaceSize))
+                }
+                AutoResizeText(text = BigDecimal(size).setScale(3,
+                    RoundingMode.HALF_UP).toPlainString(), modifier = Modifier
+                    .padding()
+                    .padding(2.dp))
+            }
+        }
+    }
+    Spacer(Modifier
+        .fillMaxWidth()
+        .height(1.dp)
+        .background(Blue1200))
 }
 
 @Composable
@@ -193,7 +206,7 @@ internal fun TransactingScreen(coinViewModel: CoinViewModel, userAccountViewMode
     val selectedBuyWay = remember { mutableStateListOf(false, true, false) }
     val buyWayList = listOf("지정가", "시장가", "예약")
 
-    val symbol = coinViewModel.coin?.info?.symbol ?: throw IllegalArgumentException("Failed load symbol")
+    val symbol = coinViewModel.coin?.info?.symbol!!
 
 
     if(selectedTap == TransactionState.BUY || selectedTap == TransactionState.SELL) {
@@ -216,30 +229,35 @@ internal fun TransactingScreen(coinViewModel: CoinViewModel, userAccountViewMode
                         }
                     }
                 }
-                Row() {
-                    Text("주문가능", modifier = Modifier.weight(1f), fontSize = 12.sp)
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text("주문가능", modifier = Modifier.width(50.dp), fontSize = 12.sp, maxLines = 1)
                     val textValue =
                         if (selectedTap == TransactionState.BUY)
                             userAccountViewModel.krwStringFormat + " KRW"
                         else {
-
                             if (userAccountViewModel.isSymbolNull(symbol)) 0.toString() + " " + SymbolFormat.get(
                                 coinViewModel.coin?.info?.symbol!!)
-
-                            else userAccountViewModel.getCoinCount(symbol).toPlainString() + " " + SymbolFormat.get(
+                            else userAccountViewModel.getCoinCount(symbol)
+                                .toPlainString() + " " + SymbolFormat.get(
                                 coinViewModel.coin?.info?.symbol!!) + "\n" + "≈" + NumberFormat.krwFormat(
-                                coinViewModel.coin!!.ticker.trade_price * userAccountViewModel.getCoinCount(symbol).toDouble()) + " KRW"
-
+                                coinViewModel.coin!!.ticker.trade_price * userAccountViewModel.getCoinCount(
+                                    symbol).toDouble()) + " KRW"
                         }
-                    AutoResizeText(textValue, textStyle = TextStyle(fontSize = 13.sp, fontWeight = FontWeight.Bold), textAlign = TextAlign.End)
+                    AutoResizeText(textValue,
+                        textStyle = TextStyle(fontWeight = FontWeight.Bold),
+                        textAlign = TextAlign.End,
+                        targetTextSizeHeight = 13.sp,
+                        maxLines = if (selectedTap == TransactionState.SELL) 2 else 1,
+                        modifier = Modifier.fillMaxWidth())
                 }
             }
             if (selectedBuyWay[0]) PreparingScreen()
-            else if (selectedBuyWay[1]) ByMarketPriceView(coinViewModel, userAccountViewModel, selectedTap)
+            else if (selectedBuyWay[1]) ByMarketPriceView(coinViewModel,
+                userAccountViewModel,
+                selectedTap)
             else if (selectedBuyWay[2]) PreparingScreen()
         }
-    }
-    else {      // 거래내역
+    } else {      // 거래내역
         HistoryView(symbol)
     }
 }
@@ -432,7 +450,7 @@ fun HistoryItem(history: History) {
                 Text(d.first, modifier = Modifier.weight(1f), fontSize = 14.sp)
 
                 val fontSize = if(d.second.length > 18) 12.sp else 14.sp
-                Text(d.second, fontSize = fontSize)
+                AutoResizeText(d.second, targetTextSizeHeight = fontSize)
             }
     }
 }

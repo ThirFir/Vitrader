@@ -1,13 +1,10 @@
 package com.example.vitrader.screen.main
 
-import android.annotation.SuppressLint
 import android.content.Intent
-import android.graphics.Bitmap
-import android.graphics.BitmapFactory
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.Icon
 import androidx.compose.material.Text
@@ -26,35 +23,28 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.vitrader.ProfileActivity
-import com.example.vitrader.utils.NumberFormat
-import com.example.vitrader.utils.Ranker
-import com.example.vitrader.utils.Rankers
-import com.example.vitrader.utils.noRippleClickable
-import com.example.vitrader.utils.viewmodel.UserProfileViewModel
-import com.google.firebase.firestore.FirebaseFirestore
-import com.google.firebase.storage.FirebaseStorage
-
+import com.example.vitrader.utils.*
 
 
 @Composable
 fun RankingScreen() {
 
     LazyColumn{
-        itemsIndexed(Rankers.rankers) { rank, user ->
-            RankProfile(rank + 1, user)
+        items(Rankers.rankers) {
+            RankProfile(it)
         }
     }
 
 }
 
 @Composable
-fun RankProfile(rank: Int, user: Ranker) {
+fun RankProfile(ranker: Ranker) {
 
     val context = LocalContext.current
 
     Rankers.rankerNickname
-    val nickname by remember { mutableStateOf(Rankers.rankerNickname[user.uid]) }
-    val bitmap by remember { mutableStateOf(Rankers.rankerProfileImage[user.uid]) }
+    val nickname by remember { mutableStateOf(Rankers.rankerNickname[ranker.uid]) }
+    val bitmap by remember { mutableStateOf(Rankers.rankerProfileImage[ranker.uid]) }
 
     
     Row(modifier = Modifier
@@ -62,7 +52,7 @@ fun RankProfile(rank: Int, user: Ranker) {
         .padding(vertical = 12.dp, horizontal = 8.dp)
         .noRippleClickable {
             val intent = Intent(context, ProfileActivity::class.java).apply {
-                putExtra("uid", user.uid)
+                putExtra("uid", ranker.uid)
             }
             context.startActivity(intent)
         },
@@ -73,14 +63,14 @@ fun RankProfile(rank: Int, user: Ranker) {
             verticalAlignment = Alignment.CenterVertically) {
 
             val rankColor =
-                when(rank) {
+                when(ranker.rank) {
                     1 -> Color(255, 215, 0)
                     2 -> Color(192, 192, 192)
                     3 -> Color(210, 105, 30)
                     else -> Color.White
                 }
 
-            Text(rank.toString(),
+            Text(ranker.rank.toString(),
                 modifier = Modifier
                     .width(50.dp)
                     .padding()
@@ -113,6 +103,6 @@ fun RankProfile(rank: Int, user: Ranker) {
 
         }
 
-        Text(NumberFormat.krwFormat(user.krw) + " KRW", color = Color.White, maxLines = 1, modifier = Modifier.width(150.dp), fontSize = 13.5.sp, textAlign = TextAlign.End)
+        AutoResizeText(NumberFormat.krwFormat(ranker.krw) + " KRW", color = Color.White, maxLines = 1, modifier = Modifier.width(150.dp), targetTextSizeHeight = 13.5.sp, textAlign = TextAlign.End)
     }
 }

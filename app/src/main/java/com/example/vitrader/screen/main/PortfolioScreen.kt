@@ -19,6 +19,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.TextUnit
@@ -27,6 +28,7 @@ import androidx.compose.ui.unit.sp
 import com.example.vitrader.navigation.moveToTransactionActivity
 import com.example.vitrader.theme.Blue1800
 import com.example.vitrader.theme.Blue200
+import com.example.vitrader.utils.AutoResizeText
 import com.example.vitrader.utils.NumberFormat
 import com.example.vitrader.utils.noRippleClickable
 import com.example.vitrader.utils.viewmodel.CoinListViewModel
@@ -84,9 +86,9 @@ fun TotalPossessView(userAccountViewModel: UserAccountViewModel, coinListViewMod
                     Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier
                         .fillMaxSize()
                         .weight(3f)) {
-                        Text("₩ " + NumberFormat.krwFormat(totalEvaluation + userAccountViewModel.krw),
-                            fontSize = 36.sp,
-                            fontWeight = FontWeight.Bold,
+                        AutoResizeText("₩ " + NumberFormat.krwFormat(totalEvaluation + userAccountViewModel.krw),
+                            targetTextSizeHeight = 36.sp,
+                            textStyle = TextStyle(fontWeight = FontWeight.Bold),
                             color = Color.White)
                         Row() {
                             if (userEvalChange == "RISE") Text("+", color = Color.Green)
@@ -101,21 +103,17 @@ fun TotalPossessView(userAccountViewModel: UserAccountViewModel, coinListViewMod
                         }
                     }
                     Column(modifier = Modifier.fillMaxWidth(), horizontalAlignment = Alignment.End) {
-                        var numberFontSize: TextUnit
                         Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
                             Text("보유 KRW", fontSize = 12.sp, modifier = Modifier.weight(1f), textAlign = TextAlign.End)
-                            numberFontSize = if(userAccountViewModel.krwStringFormat.length > 15) 12.sp else 14.5.sp
-                            Text(userAccountViewModel.krwStringFormat, color = Color.White, modifier = Modifier.width(150.dp), textAlign = TextAlign.End, fontSize = numberFontSize)
+                            AutoResizeText(userAccountViewModel.krwStringFormat, color = Color.White, modifier = Modifier.width(150.dp), textAlign = TextAlign.End)
                         }
                         Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
                             Text("총 평가", fontSize = 12.sp, modifier = Modifier.weight(1f), textAlign = TextAlign.End)
-                            numberFontSize = if(NumberFormat.krwFormat(totalEvaluation).length > 15) 12.sp else 14.5.sp
-                            Text(NumberFormat.krwFormat(totalEvaluation), color = Color.White, modifier = Modifier.width(150.dp), textAlign = TextAlign.End, fontSize = numberFontSize)
+                            AutoResizeText(NumberFormat.krwFormat(totalEvaluation), color = Color.White, modifier = Modifier.width(150.dp), textAlign = TextAlign.End)
                         }
                         Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
                             Text("총 매수", fontSize = 12.sp, modifier = Modifier.weight(1f), textAlign = TextAlign.End)
-                            numberFontSize = if(userAccountViewModel.totalBuyStringFormat.length > 15) 12.sp else 14.5.sp
-                            Text(userAccountViewModel.totalBuyStringFormat, color = Color.White, modifier = Modifier.width(150.dp), textAlign = TextAlign.End, fontSize = numberFontSize)
+                            AutoResizeText(userAccountViewModel.totalBuyStringFormat, color = Color.White, modifier = Modifier.width(150.dp), textAlign = TextAlign.End)
                         }
                     }
                 }
@@ -140,7 +138,7 @@ fun TotalPossessView(userAccountViewModel: UserAccountViewModel, coinListViewMod
 
                                    val itemChange = if(coinEval - userEval > 0.0) "RISE" else if(coinEval - userEval < 0.0) "FALL" else "EVEN"
 
-                                   Text(NumberFormat.krwFormat(coinEval.roundToLong() - userEval.roundToLong()), color = NumberFormat.color(itemChange))
+                                   AutoResizeText(NumberFormat.krwFormat(coinEval.roundToLong() - userEval.roundToLong()), color = NumberFormat.color(itemChange))
                                    Text(NumberFormat.coinRate((coinEval - userEval) / userEval), color = NumberFormat.color(itemChange))
                                 }
                             }
@@ -153,34 +151,34 @@ fun TotalPossessView(userAccountViewModel: UserAccountViewModel, coinListViewMod
                                 coinChange = if(coinListViewModel.coins[symbol]!!.ticker.change == "RISE") "RISE" else "FALL"
 
                                 Row() {
-                                    var numberFontSize: TextUnit
                                     Column(Modifier.weight(1f),
                                         horizontalAlignment = Alignment.End) {
                                         Text("현재가", fontSize = 12.sp, color = Blue200)
-                                        Text(NumberFormat.coinPrice(coinListViewModel.coins[symbol]?.ticker?.trade_price ?: 0.0), color = NumberFormat.color(coinChange), maxLines = 1, fontSize = 14.sp)
+                                        AutoResizeText(NumberFormat.coinPrice(coinListViewModel.coins[symbol]?.ticker?.trade_price ?: 0.0), color = NumberFormat.color(coinChange), maxLines = 1)
                                         Spacer(Modifier.height(10.dp))
 
                                         Text("매수평균가", fontSize = 12.sp, color = Blue200)
-                                        Text(NumberFormat.coinPrice(userAccountViewModel.getAverage(symbol)
-                                            .toDouble()), maxLines = 1, fontSize = 14.sp)
+                                        AutoResizeText(NumberFormat.coinPrice(userAccountViewModel.getAverage(symbol)
+                                            .toDouble()), maxLines = 1)
                                         Spacer(Modifier.height(10.dp))
 
                                         Text("평가 금액", fontSize = 12.sp, color = Blue200)
-                                        Text(NumberFormat.krwFormat(coinEval), maxLines = 1, fontSize = if(NumberFormat.krwFormat(coinEval).length > 20) 12.sp else 14.sp)
+                                        AutoResizeText(NumberFormat.krwFormat(coinEval), maxLines = 1)
                                     }
+                                    Spacer(Modifier.width(12.dp))
                                     Column(Modifier.weight(1f),
                                         horizontalAlignment = Alignment.End) {
                                         Text("전일 대비", fontSize = 12.sp, color = Blue200)
-                                        Text(NumberFormat.coinRate(coinListViewModel.coins[symbol]?.ticker?.signed_change_rate ?: 0.0), color = NumberFormat.color(coinChange), fontSize = 14.sp)
+                                        AutoResizeText(NumberFormat.coinRate(coinListViewModel.coins[symbol]?.ticker?.signed_change_rate ?: 0.0), color = NumberFormat.color(coinChange))
                                         Spacer(Modifier.height(10.dp))
 
 
                                         Text("보유 수량", fontSize = 12.sp, color = Blue200)
-                                        Text(userAccountViewModel.getCoinCount(symbol).toPlainString(), maxLines = 1, fontSize = if(userAccountViewModel.getCoinCount(symbol).toPlainString().length > 20) 12.sp else 14.sp)
+                                        AutoResizeText(userAccountViewModel.getCoinCount(symbol).toPlainString(), maxLines = 1)
                                         Spacer(Modifier.height(10.dp))
 
                                         Text("매수 금액", fontSize = 12.sp, color = Blue200)
-                                        Text(NumberFormat.krwFormat(userEval), maxLines = 1, fontSize = 14.sp)
+                                        AutoResizeText(NumberFormat.krwFormat(userEval), maxLines = 1)
                                     }
                                 }
                                 Spacer(Modifier.height(20.dp))

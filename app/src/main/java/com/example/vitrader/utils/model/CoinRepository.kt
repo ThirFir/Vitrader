@@ -14,7 +14,6 @@ object CoinRepository {
     val coins get() = _coins
 
     init {
-        Log.d("ddddddddd", "fffffffff")
         launchGettingExternalCoinData()
     }
 
@@ -27,10 +26,8 @@ object CoinRepository {
     }
 
     fun launchGettingExternalCoinData() {
-        CoroutineScope(Dispatchers.Main).launch {
-            CoroutineScope(Dispatchers.Default).launch {
-                UpbitWebSocketListener.launchGettingExternalCoinData()
-            }
+        CoroutineScope(Dispatchers.IO).launch {
+            UpbitWebSocketListener.launchGettingExternalCoinData()
         }
     }
 

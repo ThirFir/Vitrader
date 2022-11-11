@@ -15,6 +15,10 @@ object ActivityManager {
             activities.first().finish()
             activities.removeFirst()
         }
+    }
 
+    fun finishAll() {
+        for(a in activities)
+            a.finish()
     }
 }

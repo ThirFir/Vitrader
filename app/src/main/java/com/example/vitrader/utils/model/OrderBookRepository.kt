@@ -11,14 +11,13 @@ object OrderBookRepository {
     private var _orderBooks = mutableStateMapOf<String, OrderBook>()
     val orderBooks get() = _orderBooks
 
-
     init {
         launchGettingExternalCoinData()
     }
     fun launchGettingExternalCoinData() {
         CoroutineScope(Dispatchers.Main).launch {
             CoroutineScope(Dispatchers.Default).launch {
-                UpbitWebSocketListener2.launchGettingExternalCoinData()
+                UpbitWebSocketListener2.launchGettingExternalOrderBookData()
             }
         }
     }

@@ -11,6 +11,7 @@ import com.example.vitrader.utils.ActivityManager
 import com.example.vitrader.utils.db.UserRemoteDataSource
 import com.example.vitrader.utils.model.UserAccountData
 import com.example.vitrader.utils.model.UserProfileData
+import com.example.vitrader.utils.viewmodel.CoinListViewModel
 import com.example.vitrader.utils.viewmodel.UserAccountViewModel
 import com.example.vitrader.utils.viewmodel.UserProfileViewModel
 import com.google.firebase.auth.FirebaseAuth
@@ -22,6 +23,7 @@ class ProfileActivity : ComponentActivity()  {
 
     private lateinit var userAccountViewModel: UserAccountViewModel
     private lateinit var userProfileViewModel: UserProfileViewModel
+    private lateinit var coinListViewModel: CoinListViewModel
     private var uid = ""
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -36,6 +38,7 @@ class ProfileActivity : ComponentActivity()  {
         val userProfile = mutableStateOf(UserProfileData())
         userAccountViewModel = ViewModelProvider(this)[UserAccountViewModel::class.java]
         userProfileViewModel = ViewModelProvider(this)[UserProfileViewModel::class.java]
+        coinListViewModel = ViewModelProvider(this)[CoinListViewModel::class.java]
 
         if(uid == FirebaseAuth.getInstance().currentUser?.uid) {
             userAccount.value = UserAccountData(userAccountViewModel.krw, userAccountViewModel.possessingCoins, userAccountViewModel.totalBuy)
@@ -49,7 +52,7 @@ class ProfileActivity : ComponentActivity()  {
 
         setContent{
             VitraderTheme {
-                ProfileScreen(userAccount.value, userProfile.value, userProfileViewModel)
+                ProfileScreen(userAccount.value, userProfile.value, userProfileViewModel, coinListViewModel, uid)
             }
         }
     }
